@@ -26,6 +26,24 @@ interface Transaction {
   valor_brl: number;
 }
 
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    value: number;
+    payload: {
+      categoria: string;
+      categoriaCompleta: string;
+    };
+  }>;
+  label?: string;
+}
+
+interface ChartDataItem {
+  categoria: string;
+  total: number;
+  categoriaCompleta: string;
+}
+
 const FilteredTransactions = ({ category, transactions }: { 
   category: string;
   transactions: Transaction[];
@@ -87,11 +105,11 @@ const useIsMobile = () => {
 
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps) => {
     if (active && payload && payload.length) {
       const value = payload[0].value;
       const originalCategory = payload[0].payload.categoriaCompleta;
@@ -159,15 +177,15 @@ export default function Home() {
     }, {});
 
     const chartData = Object.entries(categoryTotals).map(([category, total]) => ({
-      categoria:  category,
-      total: total,
+      categoria: category,
+      total: total as number,
       categoriaCompleta: category
     }));
 
     setChartData(chartData);
   };
 
-  const handleBarClick = (data: any) => {
+  const handleBarClick = (data: ChartDataItem) => {
     setSelectedCategory(data.categoria);
   };
 
@@ -242,7 +260,7 @@ export default function Home() {
                     name="Total de Gastos"
                     isAnimationActive={true}
                     barSize={isMobile ? 20 : 40}
-                    onClick={handleBarClick}
+                    onClick={(data) => handleBarClick(data as unknown as ChartDataItem)}
                     cursor="pointer"
                   >
                     {
