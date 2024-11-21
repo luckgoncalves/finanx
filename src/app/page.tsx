@@ -145,7 +145,20 @@ export default function Home() {
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-    const formattedData = jsonData.map((row: any) => ({
+    // Define interface for raw Excel data
+    interface ExcelRow {
+      'Data de compra': string;
+      'Nome no cartão': string;
+      'Final do Cartão': string;
+      'Categoria': string;
+      'Descrição': string;
+      'Parcela': string;
+      'Valor (em US$)': string | number;
+      'Cotação (em R$)': string | number;
+      'Valor (em R$)': string | number;
+    }
+
+    const formattedData = (jsonData as ExcelRow[]).map((row) => ({
       data_compra: row['Data de compra'],
       nome_cartao: row['Nome no cartão'],
       final_cartao: row['Final do Cartão'],
@@ -166,7 +179,7 @@ export default function Home() {
     setTransactions(formattedData);
 
     // Process data for chart
-    const categoryTotals = formattedData.reduce((acc: any, curr: Transaction) => {
+    const categoryTotals = formattedData.reduce((acc: Record<string, number>, curr: Transaction) => {
       if (curr.valor_brl < 0) return acc;
       
       if (!acc[curr.categoria]) {
