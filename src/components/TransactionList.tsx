@@ -183,26 +183,26 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                         </div>
                       </div>
 
-                      {/* Ações */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Ações - sempre visível no mobile, hover no desktop */}
+                      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingTransaction(transaction)}
-                          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700 transition-colors"
                           aria-label="Editar"
                         >
-                          <PencilIcon className="w-4 h-4 text-zinc-400" />
+                          <PencilIcon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-400" />
                         </button>
                         <button
                           onClick={() => handleDelete(transaction.id)}
                           className={`p-2 rounded-lg transition-colors ${
                             deletingId === transaction.id
                               ? 'bg-rose-100 dark:bg-rose-900/30'
-                              : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                              : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700'
                           }`}
                           aria-label={deletingId === transaction.id ? 'Confirmar exclusão' : 'Excluir'}
                         >
                           <TrashIcon
-                            className={`w-4 h-4 ${
+                            className={`w-5 h-5 sm:w-4 sm:h-4 ${
                               deletingId === transaction.id
                                 ? 'text-rose-500'
                                 : 'text-zinc-400'
