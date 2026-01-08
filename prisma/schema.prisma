@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  name         String?
-  password     String
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
-  transactions Transaction[]
-  categories   Category[]
+  id                  String        @id @default(uuid())
+  email               String        @unique
+  name                String?
+  password            String
+  onboardingCompleted Boolean       @default(false) @map("onboarding_completed")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  transactions        Transaction[]
+  categories          Category[]
 
   @@map("users")
 }

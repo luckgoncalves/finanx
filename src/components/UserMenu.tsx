@@ -8,11 +8,17 @@ import {
   ArrowRightOnRectangleIcon,
   CloudIcon,
   ServerIcon,
+  AcademicCapIcon,
 } from '@heroicons/react/24/outline';
 
-export function UserMenu() {
+interface UserMenuProps {
+  onShowOnboarding?: () => void;
+}
+
+export function UserMenu({ onShowOnboarding }: UserMenuProps) {
   const { user, signOut, loading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -34,6 +40,20 @@ export function UserMenu() {
     await signOut();
     setIsOpen(false);
     router.push('/login');
+  };
+
+  const handleShowTutorial = async () => {
+    setIsResetting(true);
+    try {
+      // Reset onboarding status in database
+      await fetch('/api/user/onboarding', { method: 'DELETE' });
+      setIsOpen(false);
+      onShowOnboarding?.();
+    } catch (error) {
+      console.error('Error resetting onboarding:', error);
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   if (loading) {
@@ -90,6 +110,19 @@ export function UserMenu() {
               </span>
             </div>
           </div>
+
+          <button
+            onClick={handleShowTutorial}
+            disabled={isResetting}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+          >
+            {isResetting ? (
+              <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <AcademicCapIcon className="w-5 h-5 text-purple-500" />
+            )}
+            Ver tutorial novamente
+          </button>
 
           <button
             onClick={handleSignOut}
