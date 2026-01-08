@@ -45,7 +45,7 @@ export default function DespesasPage() {
                 <span className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400">Pagas</span>
               </div>
               <p className="text-base sm:text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 truncate">
-                {monthlyData.totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                {monthlyData.totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">
                 {monthlyData.expenses.filter(e => e.paid).length} de {monthlyData.expenses.length}
@@ -57,7 +57,7 @@ export default function DespesasPage() {
                 <span className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400">Pendentes</span>
               </div>
               <p className="text-base sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400 truncate">
-                {monthlyData.totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                {monthlyData.totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">
                 {monthlyData.expenses.filter(e => !e.paid).length} de {monthlyData.expenses.length}

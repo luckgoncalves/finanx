@@ -12,17 +12,7 @@ interface SummaryCardProps {
 
 export function SummaryCard({ title, amount, type, subtitle, compact = false }: SummaryCardProps) {
   const formatCurrency = (value: number) => {
-    const absValue = Math.abs(value);
-    // Para valores grandes, usa formato compacto em mobile
-    if (absValue >= 10000) {
-      return absValue.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      });
-    }
-    return absValue.toLocaleString('pt-BR', {
+    return Math.abs(value).toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     });

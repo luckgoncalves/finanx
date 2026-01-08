@@ -94,19 +94,19 @@ export default function Home() {
             <div className="min-w-0">
               <p className="text-xs text-zinc-400 dark:text-zinc-500">Entradas</p>
               <p className="text-sm sm:text-base font-semibold text-emerald-600 dark:text-emerald-400 font-mono truncate">
-                {yearlyData.totalIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                {yearlyData.totalIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
             </div>
             <div className="min-w-0">
               <p className="text-xs text-zinc-400 dark:text-zinc-500">Despesas</p>
               <p className="text-sm sm:text-base font-semibold text-rose-600 dark:text-rose-400 font-mono truncate">
-                {yearlyData.totalExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                {yearlyData.totalExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
             </div>
             <div className="min-w-0">
               <p className="text-xs text-zinc-400 dark:text-zinc-500">Saldo</p>
               <p className={`text-sm sm:text-base font-semibold font-mono truncate ${yearlyData.balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                {yearlyData.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                {yearlyData.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
             </div>
           </div>
@@ -164,8 +164,6 @@ export default function Home() {
                     {transaction.amount.toLocaleString('pt-BR', {
                       style: 'currency',
                       currency: 'BRL',
-                      minimumFractionDigits: transaction.amount >= 1000 ? 0 : 2,
-                      maximumFractionDigits: transaction.amount >= 1000 ? 0 : 2,
                     })}
                   </span>
                 </div>

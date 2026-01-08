@@ -27,8 +27,6 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
     return value.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-      minimumFractionDigits: value >= 1000 ? 0 : 2,
-      maximumFractionDigits: value >= 1000 ? 0 : 2,
     });
   };
 
