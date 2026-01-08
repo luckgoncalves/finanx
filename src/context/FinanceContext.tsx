@@ -156,10 +156,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     }
   }, [state, user, isDatabaseConfigured]);
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>) => {
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt' | 'paid' | 'paidAt'>) => {
     const newTransaction: Transaction = {
       ...transaction,
       id: uuidv4(),
+      paid: false,
+      paidAt: null,
       createdAt: new Date().toISOString(),
     };
 
