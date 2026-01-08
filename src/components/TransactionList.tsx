@@ -98,7 +98,7 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
               <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               {groupedTransactions[date].map((transaction) => {
                 const category = getCategoryInfo(transaction.category);
                 const isPaid = transaction.paid;
@@ -107,71 +107,71 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                 return (
                   <div
                     key={transaction.id}
-                    className={`group flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark hover:scale-[1.01] transition-all ${
+                    className={`group p-4 rounded-2xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark transition-all ${
                       isPaid ? 'opacity-60' : ''
                     }`}
                   >
-                    {/* Checkbox para marcar como pago (apenas despesas) */}
-                    {type === 'expense' && (
-                      <button
-                        onClick={() => handleTogglePaid(transaction)}
-                        disabled={isToggling}
-                        className={`flex-shrink-0 transition-all ${
-                          isToggling ? 'opacity-50' : 'hover:scale-110'
-                        }`}
-                        aria-label={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
-                      >
-                        {isPaid ? (
-                          <CheckCircleSolid className="w-6 h-6 text-emerald-500" />
-                        ) : (
-                          <CheckCircleIcon className="w-6 h-6 text-zinc-300 dark:text-zinc-600 hover:text-emerald-500 dark:hover:text-emerald-400" />
-                        )}
-                      </button>
-                    )}
+                    <div className="flex items-start gap-3">
+                      {/* Checkbox para marcar como pago (apenas despesas) */}
+                      {type === 'expense' && (
+                        <button
+                          onClick={() => handleTogglePaid(transaction)}
+                          disabled={isToggling}
+                          className={`flex-shrink-0 mt-0.5 transition-all ${
+                            isToggling ? 'opacity-50' : 'hover:scale-110'
+                          }`}
+                          aria-label={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+                        >
+                          {isPaid ? (
+                            <CheckCircleSolid className="w-6 h-6 text-emerald-500" />
+                          ) : (
+                            <CheckCircleIcon className="w-6 h-6 text-zinc-300 dark:text-zinc-600 hover:text-emerald-500 dark:hover:text-emerald-400" />
+                          )}
+                        </button>
+                      )}
 
-                    {showCategory && category && (
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: `${category.color}15` }}
-                      >
-                        <span
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: category.color }}
-                        />
+                      {/* Conteúdo principal */}
+                      <div className="flex-1">
+                        {/* Descrição */}
+                        <p className={`font-medium ${isPaid ? 'line-through text-zinc-400 dark:text-zinc-500' : ''}`}>
+                          {transaction.description}
+                        </p>
+                        
+                        {/* Valor */}
+                        <p
+                          className={`font-semibold font-mono mt-1 ${
+                            type === 'income'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : isPaid 
+                                ? 'text-zinc-400 dark:text-zinc-500 line-through'
+                                : 'text-rose-600 dark:text-rose-400'
+                          }`}
+                        >
+                          {type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
+                        </p>
+                        
+                        {/* Categoria */}
+                        <div className="flex items-center gap-2 mt-2">
+                          {showCategory && category && (
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full"
+                                style={{ backgroundColor: category.color }}
+                              />
+                              <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                                {category.name}
+                              </span>
+                            </div>
+                          )}
+                          {isPaid && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                              Pago
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    )}
 
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-medium truncate ${isPaid ? 'line-through text-zinc-400 dark:text-zinc-500' : ''}`}>
-                        {transaction.description}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        {showCategory && category && (
-                          <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                            {category.name}
-                          </span>
-                        )}
-                        {isPaid && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                            Pago
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`font-semibold font-mono text-sm sm:text-base flex-shrink-0 ${
-                          type === 'income'
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : isPaid 
-                              ? 'text-zinc-400 dark:text-zinc-500 line-through'
-                              : 'text-rose-600 dark:text-rose-400'
-                        }`}
-                      >
-                        {type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
-                      </span>
-
+                      {/* Ações */}
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingTransaction(transaction)}
