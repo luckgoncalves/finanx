@@ -6,14 +6,19 @@ import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
 import { TransactionList } from '@/components/TransactionList';
 import { TransactionForm } from '@/components/TransactionForm';
+import { EntradasPageSkeleton } from '@/components/Skeleton';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 export default function EntradasPage() {
   const [showForm, setShowForm] = useState(false);
-  const { state, getMonthlyData } = useFinance();
+  const { state, getMonthlyData, loading } = useFinance();
   const { currentMonth, currentYear } = state;
   
   const monthlyData = getMonthlyData(currentMonth, currentYear);
+
+  if (loading) {
+    return <EntradasPageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen">

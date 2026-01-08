@@ -4,12 +4,13 @@ import { useFinance } from '@/context/FinanceContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
 import { UserMenu } from '@/components/UserMenu';
+import { DashboardSkeleton } from '@/components/Skeleton';
 import { MONTHS } from '@/types/finance';
 import Link from 'next/link';
 import { PlusIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
-  const { state, getMonthlyData, getYearlyTotal } = useFinance();
+  const { state, getMonthlyData, getYearlyTotal, loading } = useFinance();
   const { currentMonth, currentYear } = state;
   
   const monthlyData = getMonthlyData(currentMonth, currentYear);
@@ -19,6 +20,10 @@ export default function Home() {
   const recentTransactions = [...monthlyData.income, ...monthlyData.expenses]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="min-h-screen">

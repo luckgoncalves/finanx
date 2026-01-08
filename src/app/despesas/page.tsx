@@ -6,16 +6,21 @@ import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
 import { TransactionList } from '@/components/TransactionList';
 import { TransactionForm } from '@/components/TransactionForm';
+import { DespesasPageSkeleton } from '@/components/Skeleton';
 import { PlusIcon, CheckCircleIcon, ClockIcon, ChartBarIcon, ListBulletIcon } from '@heroicons/react/24/outline';
 
 export default function DespesasPage() {
   const [showForm, setShowForm] = useState(false);
   const [viewMode, setViewMode] = useState<'dashboard' | 'list'>('dashboard');
-  const { state, getMonthlyData } = useFinance();
+  const { state, getMonthlyData, loading } = useFinance();
   const { currentMonth, currentYear } = state;
   
   const monthlyData = getMonthlyData(currentMonth, currentYear);
   const categorySummary = getCategorySummary(monthlyData.expenses, state.categories);
+
+  if (loading) {
+    return <DespesasPageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen">
