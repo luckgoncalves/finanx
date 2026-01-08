@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useFinance } from '@/context/FinanceContext';
 import { TransactionType } from '@/types/finance';
@@ -45,6 +45,16 @@ export function TransactionForm({ type, onClose, editTransaction }: TransactionF
   const [installments, setInstallments] = useState(2);
   const [recurringMonths, setRecurringMonths] = useState(12);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +120,10 @@ export function TransactionForm({ type, onClose, editTransaction }: TransactionF
         onClick={onClose}
       />
       
-      <div className="relative w-full md:max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl md:rounded-2xl p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div 
+        className="relative w-full md:max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl md:rounded-2xl p-6 animate-slide-up max-h-[90vh] overflow-y-auto overscroll-contain"
+        onTouchMove={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">
             {editTransaction ? 'Editar' : 'Nova'}{' '}
