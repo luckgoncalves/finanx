@@ -1,29 +1,37 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+// Check if app is already installed (runs only on client)
+function checkIsInstalled(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  // Check if running in standalone mode
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    return true;
+  }
+  
+  // Check if running as PWA on iOS
+  if ((navigator as Navigator & { standalone?: boolean }).standalone === true) {
+    return true;
+  }
+  
+  return false;
+}
+
 export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(() => checkIsInstalled());
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-      return;
-    }
-
-    // Check if running as PWA on iOS
-    if ((navigator as Navigator & { standalone?: boolean }).standalone === true) {
-      setIsInstalled(true);
-      return;
-    }
+    // If already installed, no need to listen for events
+    if (isInstalled) return;
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -44,9 +52,9 @@ export function usePWAInstall() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [isInstalled]);
 
-  const install = async () => {
+  const install = useCallback(async () => {
     if (!deferredPrompt) return false;
 
     try {
@@ -64,7 +72,7 @@ export function usePWAInstall() {
       console.error('Error installing PWA:', error);
       return false;
     }
-  };
+  }, [deferredPrompt]);
 
   return {
     isInstallable,
@@ -72,4 +80,3 @@ export function usePWAInstall() {
     install,
   };
 }
-
