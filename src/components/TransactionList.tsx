@@ -27,6 +27,8 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
     return value.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
+      minimumFractionDigits: value >= 1000 ? 0 : 2,
+      maximumFractionDigits: value >= 1000 ? 0 : 2,
     });
   };
 
@@ -161,7 +163,7 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`font-semibold font-mono ${
+                        className={`font-semibold font-mono text-sm sm:text-base flex-shrink-0 ${
                           type === 'income'
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : isPaid 

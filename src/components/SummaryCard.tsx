@@ -7,11 +7,22 @@ interface SummaryCardProps {
   amount: number;
   type: 'income' | 'expense' | 'balance';
   subtitle?: string;
+  compact?: boolean;
 }
 
-export function SummaryCard({ title, amount, type, subtitle }: SummaryCardProps) {
+export function SummaryCard({ title, amount, type, subtitle, compact = false }: SummaryCardProps) {
   const formatCurrency = (value: number) => {
-    return Math.abs(value).toLocaleString('pt-BR', {
+    const absValue = Math.abs(value);
+    // Para valores grandes, usa formato compacto em mobile
+    if (absValue >= 10000) {
+      return absValue.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      });
+    }
+    return absValue.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     });
@@ -49,20 +60,20 @@ export function SummaryCard({ title, amount, type, subtitle }: SummaryCardProps)
   const Icon = styles.icon;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-5 ${styles.bg} shadow-xl ${styles.shadow} text-white`}>
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-white/80">{title}</p>
-          <p className="text-2xl font-bold mt-1 font-mono">
+    <div className={`relative overflow-hidden rounded-2xl ${compact ? 'p-4' : 'p-5'} ${styles.bg} shadow-xl ${styles.shadow} text-white`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-white/80 truncate`}>{title}</p>
+          <p className={`${compact ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'} font-bold mt-1 font-mono truncate`}>
             {type === 'balance' && amount < 0 ? '-' : ''}
             {formatCurrency(amount)}
           </p>
           {subtitle && (
-            <p className="text-xs text-white/60 mt-1">{subtitle}</p>
+            <p className="text-xs text-white/60 mt-1 truncate">{subtitle}</p>
           )}
         </div>
-        <div className={`p-2 rounded-xl ${styles.iconBg}`}>
-          <Icon className="w-5 h-5" />
+        <div className={`p-2 rounded-xl ${styles.iconBg} flex-shrink-0`}>
+          <Icon className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} />
         </div>
       </div>
       
@@ -72,4 +83,3 @@ export function SummaryCard({ title, amount, type, subtitle }: SummaryCardProps)
     </div>
   );
 }
-
