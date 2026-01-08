@@ -7,6 +7,7 @@ import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   ChartBarIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
@@ -14,6 +15,7 @@ import {
   ArrowTrendingDownIcon as ArrowTrendingDownIconSolid,
   ChartBarIcon as ChartBarIconSolid,
 } from '@heroicons/react/24/solid';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 const navItems = [
   { href: '/', label: 'Início', icon: HomeIcon, iconActive: HomeIconSolid },
@@ -24,6 +26,7 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname();
+  const { isInstallable, isInstalled, install } = usePWAInstall();
 
   // Don't show navigation on login page
   if (pathname === '/login') {
@@ -79,6 +82,40 @@ export function Navigation() {
               </Link>
             );
           })}
+
+          {/* Install button - only show if installable and not already installed */}
+          {isInstallable && !isInstalled && (
+            <button
+              onClick={install}
+              className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all duration-200 md:w-14 md:h-14 group relative text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300 md:mt-auto md:mb-6"
+            >
+              <div className="relative p-2 rounded-xl transition-all duration-200 bg-purple-500/10 dark:bg-purple-400/10 group-hover:bg-purple-500/20 dark:group-hover:bg-purple-400/20">
+                <ArrowDownTrayIcon className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-medium md:hidden">Instalar</span>
+              
+              {/* Tooltip for desktop */}
+              <div className="hidden md:block absolute left-full ml-2 px-2 py-1 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                Instalar App
+              </div>
+            </button>
+          )}
+
+          {/* Installed indicator for desktop */}
+          {isInstalled && (
+            <div className="hidden md:flex flex-col items-center justify-center gap-1 p-2 rounded-xl md:w-14 md:h-14 group relative text-emerald-500 dark:text-emerald-400 md:mt-auto md:mb-6">
+              <div className="relative p-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/10">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              {/* Tooltip for desktop */}
+              <div className="hidden md:block absolute left-full ml-2 px-2 py-1 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                App Instalado
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </nav>
