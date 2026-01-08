@@ -121,7 +121,7 @@ export function TransactionForm({ type, onClose, editTransaction }: TransactionF
       />
       
       <div 
-        className="relative w-full md:max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl md:rounded-2xl p-6 animate-slide-up max-h-[90vh] overflow-y-auto overscroll-contain"
+        className="relative w-full md:max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl md:rounded-2xl p-6 pb-24 md:pb-6 animate-slide-up max-h-[85vh] overflow-y-auto overscroll-contain"
         onTouchMove={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
