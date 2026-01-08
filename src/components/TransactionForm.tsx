@@ -14,6 +14,8 @@ interface TransactionFormProps {
     amount: number;
     category: string;
     date: string;
+    paid: boolean;
+    paidAt?: string | null;
     createdAt: string;
   };
 }
@@ -50,6 +52,8 @@ export function TransactionForm({ type, onClose, editTransaction }: TransactionF
       updateTransaction({
         ...transactionData,
         id: editTransaction.id,
+        paid: editTransaction.paid,
+        paidAt: editTransaction.paidAt,
         createdAt: editTransaction.createdAt,
       });
     } else {

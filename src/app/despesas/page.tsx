@@ -6,7 +6,7 @@ import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
 import { TransactionList } from '@/components/TransactionList';
 import { TransactionForm } from '@/components/TransactionForm';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 export default function DespesasPage() {
   const [showForm, setShowForm] = useState(false);
@@ -35,6 +35,36 @@ export default function DespesasPage() {
           type="expense"
           subtitle={`${monthlyData.expenses.length} registro${monthlyData.expenses.length !== 1 ? 's' : ''}`}
         />
+
+        {/* Paid vs Pending Summary */}
+        {monthlyData.expenses.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
+                <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Pagas</span>
+              </div>
+              <p className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                {monthlyData.totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                {monthlyData.expenses.filter(e => e.paid).length} de {monthlyData.expenses.length}
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark">
+              <div className="flex items-center gap-2 mb-2">
+                <ClockIcon className="w-5 h-5 text-amber-500" />
+                <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Pendentes</span>
+              </div>
+              <p className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
+                {monthlyData.totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                {monthlyData.expenses.filter(e => !e.paid).length} de {monthlyData.expenses.length}
+              </p>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Categories Summary */}
@@ -97,7 +127,7 @@ export default function DespesasPage() {
 
 // Helper function to get category summary
 function getCategorySummary(
-  transactions: { amount: number; category: string }[],
+  transactions: { amount: number; category: string; paid?: boolean }[],
   categories: { id: string; name: string; color: string }[]
 ) {
   const totals: Record<string, number> = {};
@@ -120,4 +150,3 @@ function getCategorySummary(
     })
     .sort((a, b) => b.total - a.total);
 }
-

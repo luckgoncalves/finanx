@@ -38,6 +38,8 @@ export async function GET(request: Request) {
       date: t.date.toISOString().split('T')[0],
       month: t.month,
       year: t.year,
+      paid: t.paid,
+      paidAt: t.paidAt?.toISOString() || null,
       createdAt: t.createdAt.toISOString(),
     }));
 
@@ -75,6 +77,8 @@ export async function POST(request: Request) {
         date: new Date(data.date),
         month: data.month,
         year: data.year,
+        paid: data.paid || false,
+        paidAt: data.paid ? new Date() : null,
       },
     });
 
@@ -88,6 +92,8 @@ export async function POST(request: Request) {
         date: transaction.date.toISOString().split('T')[0],
         month: transaction.month,
         year: transaction.year,
+        paid: transaction.paid,
+        paidAt: transaction.paidAt?.toISOString() || null,
         createdAt: transaction.createdAt.toISOString(),
       },
     });
@@ -99,4 +105,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

@@ -9,6 +9,8 @@ export interface Transaction {
   date: string; // ISO date string
   month: number; // 1-12
   year: number;
+  paid: boolean;
+  paidAt?: string | null;
   createdAt: string;
 }
 

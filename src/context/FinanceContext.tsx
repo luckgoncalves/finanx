@@ -25,9 +25,10 @@ type Action =
 interface FinanceContextType {
   state: FinanceState;
   loading: boolean;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'paid' | 'paidAt'>) => Promise<void>;
   updateTransaction: (transaction: Transaction) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  togglePaid: (id: string, paid: boolean) => Promise<void>;
   addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
   setMonth: (month: number, year: number) => void;
   getMonthlyData: (month: number, year: number) => {
@@ -35,6 +36,8 @@ interface FinanceContextType {
     expenses: Transaction[];
     totalIncome: number;
     totalExpense: number;
+    totalPaid: number;
+    totalPending: number;
     balance: number;
   };
   getYearlyTotal: (year: number) => {
@@ -228,6 +231,42 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'DELETE_TRANSACTION', payload: id });
   };
 
+  const togglePaid = async (id: string, paid: boolean) => {
+    if (isDatabaseConfigured && user) {
+      try {
+        const res = await fetch(`/api/transactions/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paid }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to toggle paid status');
+        }
+
+        const data = await res.json();
+        dispatch({ type: 'UPDATE_TRANSACTION', payload: data.transaction });
+        return;
+      } catch (error) {
+        console.error('Error toggling paid:', error);
+        return;
+      }
+    }
+
+    // Update locally
+    const transaction = state.transactions.find((t) => t.id === id);
+    if (transaction) {
+      dispatch({
+        type: 'UPDATE_TRANSACTION',
+        payload: {
+          ...transaction,
+          paid,
+          paidAt: paid ? new Date().toISOString() : null,
+        },
+      });
+    }
+  };
+
   const addCategory = async (category: Omit<Category, 'id'>) => {
     const newCategory: Category = {
       ...category,
@@ -249,12 +288,16 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     const expenses = monthTransactions.filter((t) => t.type === 'expense');
     const totalIncome = income.reduce((sum, t) => sum + t.amount, 0);
     const totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
+    const totalPaid = expenses.filter((t) => t.paid).reduce((sum, t) => sum + t.amount, 0);
+    const totalPending = expenses.filter((t) => !t.paid).reduce((sum, t) => sum + t.amount, 0);
 
     return {
       income,
       expenses,
       totalIncome,
       totalExpense,
+      totalPaid,
+      totalPending,
       balance: totalIncome - totalExpense,
     };
   };
@@ -287,6 +330,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         addTransaction,
         updateTransaction,
         deleteTransaction,
+        togglePaid,
         addCategory,
         setMonth,
         getMonthlyData,
