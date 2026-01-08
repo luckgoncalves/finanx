@@ -32,6 +32,14 @@ model Transaction {
   year        Int
   paid        Boolean  @default(false)
   paidAt      DateTime? @map("paid_at")
+  
+  // Campos para parcelamento e recorrência
+  isInstallment      Boolean  @default(false) @map("is_installment")
+  installmentNumber  Int?     @map("installment_number")
+  totalInstallments  Int?     @map("total_installments")
+  isRecurring        Boolean  @default(false) @map("is_recurring")
+  recurringGroupId   String?  @map("recurring_group_id")
+  
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -40,6 +48,7 @@ model Transaction {
   @@index([year, month])
   @@index([type])
   @@index([paid])
+  @@index([recurringGroupId])
   @@map("transactions")
 }
 

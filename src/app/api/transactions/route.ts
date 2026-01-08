@@ -1,6 +1,46 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { v4 as uuidv4 } from 'uuid';
+
+// Helper to format transaction for response
+function formatTransaction(t: {
+  id: string;
+  description: string;
+  amount: { toString(): string } | number;
+  type: string;
+  category: string;
+  date: Date;
+  month: number;
+  year: number;
+  paid: boolean;
+  paidAt: Date | null;
+  isInstallment: boolean;
+  installmentNumber: number | null;
+  totalInstallments: number | null;
+  isRecurring: boolean;
+  recurringGroupId: string | null;
+  createdAt: Date;
+}) {
+  return {
+    id: t.id,
+    description: t.description,
+    amount: Number(t.amount),
+    type: t.type,
+    category: t.category,
+    date: t.date.toISOString().split('T')[0],
+    month: t.month,
+    year: t.year,
+    paid: t.paid,
+    paidAt: t.paidAt?.toISOString() || null,
+    isInstallment: t.isInstallment,
+    installmentNumber: t.installmentNumber,
+    totalInstallments: t.totalInstallments,
+    isRecurring: t.isRecurring,
+    recurringGroupId: t.recurringGroupId,
+    createdAt: t.createdAt.toISOString(),
+  };
+}
 
 // GET - List transactions
 export async function GET(request: Request) {
@@ -28,20 +68,7 @@ export async function GET(request: Request) {
       orderBy: { date: 'desc' },
     });
 
-    // Convert Decimal to number for JSON
-    const formattedTransactions = transactions.map((t) => ({
-      id: t.id,
-      description: t.description,
-      amount: Number(t.amount),
-      type: t.type,
-      category: t.category,
-      date: t.date.toISOString().split('T')[0],
-      month: t.month,
-      year: t.year,
-      paid: t.paid,
-      paidAt: t.paidAt?.toISOString() || null,
-      createdAt: t.createdAt.toISOString(),
-    }));
+    const formattedTransactions = transactions.map(formatTransaction);
 
     return NextResponse.json({ transactions: formattedTransactions });
   } catch (error) {
@@ -53,7 +80,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Create transaction
+// POST - Create transaction (supports installments and recurring)
 export async function POST(request: Request) {
   try {
     const session = await getSession();
@@ -66,36 +93,109 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
+    const { 
+      description, 
+      amount, 
+      type, 
+      category, 
+      date, 
+      month, 
+      year,
+      isInstallment,
+      totalInstallments,
+      isRecurring,
+      recurringMonths,
+    } = data;
 
-    const transaction = await prisma.transaction.create({
-      data: {
-        userId: session.userId,
-        description: data.description,
-        amount: data.amount,
-        type: data.type,
-        category: data.category,
-        date: new Date(data.date),
-        month: data.month,
-        year: data.year,
-        paid: data.paid || false,
-        paidAt: data.paid ? new Date() : null,
-      },
-    });
+    const transactions = [];
+    const recurringGroupId = (isInstallment || isRecurring) ? uuidv4() : null;
+
+    if (isInstallment && totalInstallments > 1) {
+      // Create multiple transactions for installments
+      let currentDate = new Date(date);
+      
+      for (let i = 1; i <= totalInstallments; i++) {
+        const installmentMonth = currentDate.getMonth() + 1;
+        const installmentYear = currentDate.getFullYear();
+        
+        const transaction = await prisma.transaction.create({
+          data: {
+            userId: session.userId,
+            description: `${description} (${i}/${totalInstallments})`,
+            amount,
+            type,
+            category,
+            date: new Date(currentDate),
+            month: installmentMonth,
+            year: installmentYear,
+            paid: false,
+            isInstallment: true,
+            installmentNumber: i,
+            totalInstallments,
+            isRecurring: false,
+            recurringGroupId,
+          },
+        });
+        
+        transactions.push(formatTransaction(transaction));
+        
+        // Move to next month
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+    } else if (isRecurring && recurringMonths > 1) {
+      // Create multiple transactions for recurring
+      let currentDate = new Date(date);
+      
+      for (let i = 0; i < recurringMonths; i++) {
+        const recurringMonth = currentDate.getMonth() + 1;
+        const recurringYear = currentDate.getFullYear();
+        
+        const transaction = await prisma.transaction.create({
+          data: {
+            userId: session.userId,
+            description,
+            amount,
+            type,
+            category,
+            date: new Date(currentDate),
+            month: recurringMonth,
+            year: recurringYear,
+            paid: false,
+            isInstallment: false,
+            isRecurring: true,
+            recurringGroupId,
+          },
+        });
+        
+        transactions.push(formatTransaction(transaction));
+        
+        // Move to next month
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+    } else {
+      // Single transaction
+      const transaction = await prisma.transaction.create({
+        data: {
+          userId: session.userId,
+          description,
+          amount,
+          type,
+          category,
+          date: new Date(date),
+          month,
+          year,
+          paid: false,
+          isInstallment: false,
+          isRecurring: false,
+        },
+      });
+      
+      transactions.push(formatTransaction(transaction));
+    }
 
     return NextResponse.json({
-      transaction: {
-        id: transaction.id,
-        description: transaction.description,
-        amount: Number(transaction.amount),
-        type: transaction.type,
-        category: transaction.category,
-        date: transaction.date.toISOString().split('T')[0],
-        month: transaction.month,
-        year: transaction.year,
-        paid: transaction.paid,
-        paidAt: transaction.paidAt?.toISOString() || null,
-        createdAt: transaction.createdAt.toISOString(),
-      },
+      transactions,
+      transaction: transactions[0], // For backwards compatibility
     });
   } catch (error) {
     console.error('Create transaction error:', error);

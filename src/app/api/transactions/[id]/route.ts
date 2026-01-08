@@ -2,6 +2,45 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
+// Helper to format transaction for response
+function formatTransaction(t: {
+  id: string;
+  description: string;
+  amount: { toString(): string } | number;
+  type: string;
+  category: string;
+  date: Date;
+  month: number;
+  year: number;
+  paid: boolean;
+  paidAt: Date | null;
+  isInstallment: boolean;
+  installmentNumber: number | null;
+  totalInstallments: number | null;
+  isRecurring: boolean;
+  recurringGroupId: string | null;
+  createdAt: Date;
+}) {
+  return {
+    id: t.id,
+    description: t.description,
+    amount: Number(t.amount),
+    type: t.type,
+    category: t.category,
+    date: t.date.toISOString().split('T')[0],
+    month: t.month,
+    year: t.year,
+    paid: t.paid,
+    paidAt: t.paidAt?.toISOString() || null,
+    isInstallment: t.isInstallment,
+    installmentNumber: t.installmentNumber,
+    totalInstallments: t.totalInstallments,
+    isRecurring: t.isRecurring,
+    recurringGroupId: t.recurringGroupId,
+    createdAt: t.createdAt.toISOString(),
+  };
+}
+
 // PUT - Update transaction
 export async function PUT(
   request: Request,
@@ -48,19 +87,7 @@ export async function PUT(
     });
 
     return NextResponse.json({
-      transaction: {
-        id: transaction.id,
-        description: transaction.description,
-        amount: Number(transaction.amount),
-        type: transaction.type,
-        category: transaction.category,
-        date: transaction.date.toISOString().split('T')[0],
-        month: transaction.month,
-        year: transaction.year,
-        paid: transaction.paid,
-        paidAt: transaction.paidAt?.toISOString() || null,
-        createdAt: transaction.createdAt.toISOString(),
-      },
+      transaction: formatTransaction(transaction),
     });
   } catch (error) {
     console.error('Update transaction error:', error);
@@ -110,19 +137,7 @@ export async function PATCH(
     });
 
     return NextResponse.json({
-      transaction: {
-        id: transaction.id,
-        description: transaction.description,
-        amount: Number(transaction.amount),
-        type: transaction.type,
-        category: transaction.category,
-        date: transaction.date.toISOString().split('T')[0],
-        month: transaction.month,
-        year: transaction.year,
-        paid: transaction.paid,
-        paidAt: transaction.paidAt?.toISOString() || null,
-        createdAt: transaction.createdAt.toISOString(),
-      },
+      transaction: formatTransaction(transaction),
     });
   } catch (error) {
     console.error('Toggle paid error:', error);

@@ -22,10 +22,24 @@ type Action =
   | { type: 'SET_MONTH'; payload: { month: number; year: number } }
   | { type: 'SET_LOADING'; payload: boolean };
 
+interface AddTransactionData {
+  description: string;
+  amount: number;
+  type: string;
+  category: string;
+  date: string;
+  month: number;
+  year: number;
+  isInstallment?: boolean;
+  totalInstallments?: number;
+  isRecurring?: boolean;
+  recurringMonths?: number;
+}
+
 interface FinanceContextType {
   state: FinanceState;
   loading: boolean;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'paid' | 'paidAt'>) => Promise<void>;
+  addTransaction: (transaction: AddTransactionData) => Promise<void>;
   updateTransaction: (transaction: Transaction) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   togglePaid: (id: string, paid: boolean) => Promise<void>;
@@ -156,15 +170,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     }
   }, [state, user, isDatabaseConfigured]);
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt' | 'paid' | 'paidAt'>) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: uuidv4(),
-      paid: false,
-      paidAt: null,
-      createdAt: new Date().toISOString(),
-    };
-
+  const addTransaction = async (transaction: AddTransactionData) => {
     if (isDatabaseConfigured && user) {
       try {
         const res = await fetch('/api/transactions', {
@@ -178,13 +184,38 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         }
 
         const data = await res.json();
-        dispatch({ type: 'ADD_TRANSACTION', payload: data.transaction });
+        
+        // Handle multiple transactions (installments/recurring)
+        if (data.transactions && Array.isArray(data.transactions)) {
+          data.transactions.forEach((t: Transaction) => {
+            dispatch({ type: 'ADD_TRANSACTION', payload: t });
+          });
+        } else if (data.transaction) {
+          dispatch({ type: 'ADD_TRANSACTION', payload: data.transaction });
+        }
         return;
       } catch (error) {
         console.error('Error adding transaction:', error);
         return;
       }
     }
+
+    // Local storage fallback (single transaction only)
+    const newTransaction: Transaction = {
+      id: uuidv4(),
+      description: transaction.description,
+      amount: transaction.amount,
+      type: transaction.type as 'income' | 'expense',
+      category: transaction.category,
+      date: transaction.date,
+      month: transaction.month,
+      year: transaction.year,
+      paid: false,
+      paidAt: null,
+      isInstallment: false,
+      isRecurring: false,
+      createdAt: new Date().toISOString(),
+    };
 
     dispatch({ type: 'ADD_TRANSACTION', payload: newTransaction });
   };

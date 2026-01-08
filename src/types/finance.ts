@@ -11,6 +11,13 @@ export interface Transaction {
   year: number;
   paid: boolean;
   paidAt?: string | null;
+  // Parcelamento
+  isInstallment: boolean;
+  installmentNumber?: number | null;
+  totalInstallments?: number | null;
+  // Recorrência
+  isRecurring: boolean;
+  recurringGroupId?: string | null;
   createdAt: string;
 }
 

@@ -137,6 +137,18 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                           {transaction.description}
                         </p>
                         
+                        {/* Badge de parcelamento ou recorrente */}
+                        {transaction.isInstallment && transaction.installmentNumber && transaction.totalInstallments && (
+                          <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 mt-1">
+                            Parcela {transaction.installmentNumber}/{transaction.totalInstallments}
+                          </span>
+                        )}
+                        {transaction.isRecurring && (
+                          <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 mt-1">
+                            Recorrente
+                          </span>
+                        )}
+                        
                         {/* Valor */}
                         <p
                           className={`font-semibold font-mono mt-1 ${
