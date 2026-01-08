@@ -16,6 +16,7 @@ interface TransactionListProps {
 export function TransactionList({ transactions, type, showCategory = true }: TransactionListProps) {
   const { state, deleteTransaction, togglePaid } = useFinance();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -38,20 +39,28 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
     });
   };
 
-  const handleDelete = (id: string) => {
-    if (deletingId === id) {
-      deleteTransaction(id);
-      setDeletingId(null);
-    } else {
+  const handleDelete = async (id: string) => {
+    if (confirmDeleteId === id) {
       setDeletingId(id);
-      setTimeout(() => setDeletingId(null), 3000);
+      try {
+        await deleteTransaction(id);
+      } finally {
+        setDeletingId(null);
+        setConfirmDeleteId(null);
+      }
+    } else {
+      setConfirmDeleteId(id);
+      setTimeout(() => setConfirmDeleteId(null), 3000);
     }
   };
 
   const handleTogglePaid = async (transaction: Transaction) => {
     setTogglingId(transaction.id);
-    await togglePaid(transaction.id, !transaction.paid);
-    setTogglingId(null);
+    try {
+      await togglePaid(transaction.id, !transaction.paid);
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   if (transactions.length === 0) {
@@ -118,11 +127,13 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                           onClick={() => handleTogglePaid(transaction)}
                           disabled={isToggling}
                           className={`flex-shrink-0 mt-0.5 transition-all ${
-                            isToggling ? 'opacity-50' : 'hover:scale-110'
+                            isToggling ? 'animate-pulse' : 'hover:scale-110'
                           }`}
                           aria-label={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
                         >
-                          {isPaid ? (
+                          {isToggling ? (
+                            <div className="w-6 h-6 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+                          ) : isPaid ? (
                             <CheckCircleSolid className="w-6 h-6 text-emerald-500" />
                           ) : (
                             <CheckCircleIcon className="w-6 h-6 text-zinc-300 dark:text-zinc-600 hover:text-emerald-500 dark:hover:text-emerald-400" />
@@ -187,27 +198,39 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                       <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingTransaction(transaction)}
-                          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700 transition-colors"
+                          disabled={deletingId === transaction.id}
+                          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700 transition-colors disabled:opacity-50"
                           aria-label="Editar"
                         >
                           <PencilIcon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-400" />
                         </button>
                         <button
                           onClick={() => handleDelete(transaction.id)}
+                          disabled={deletingId === transaction.id}
                           className={`p-2 rounded-lg transition-colors ${
-                            deletingId === transaction.id
+                            confirmDeleteId === transaction.id || deletingId === transaction.id
                               ? 'bg-rose-100 dark:bg-rose-900/30'
                               : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700'
                           }`}
-                          aria-label={deletingId === transaction.id ? 'Confirmar exclusão' : 'Excluir'}
+                          aria-label={
+                            deletingId === transaction.id 
+                              ? 'Excluindo...' 
+                              : confirmDeleteId === transaction.id 
+                                ? 'Confirmar exclusão' 
+                                : 'Excluir'
+                          }
                         >
-                          <TrashIcon
-                            className={`w-5 h-5 sm:w-4 sm:h-4 ${
-                              deletingId === transaction.id
-                                ? 'text-rose-500'
-                                : 'text-zinc-400'
-                            }`}
-                          />
+                          {deletingId === transaction.id ? (
+                            <div className="w-5 h-5 sm:w-4 sm:h-4 rounded-full border-2 border-rose-500 border-t-transparent animate-spin" />
+                          ) : (
+                            <TrashIcon
+                              className={`w-5 h-5 sm:w-4 sm:h-4 ${
+                                confirmDeleteId === transaction.id
+                                  ? 'text-rose-500'
+                                  : 'text-zinc-400'
+                              }`}
+                            />
+                          )}
                         </button>
                       </div>
                     </div>
