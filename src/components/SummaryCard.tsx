@@ -53,13 +53,13 @@ export function SummaryCard({ title, amount, type, subtitle, compact = false }: 
     <div className={`relative overflow-hidden rounded-2xl ${compact ? 'p-4' : 'p-5'} ${styles.bg} shadow-xl ${styles.shadow} text-white`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-white/80 truncate`}>{title}</p>
-          <p className={`${compact ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'} font-bold mt-1 font-mono truncate`}>
+          <p className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-white/80`}>{title}</p>
+          <p className={`${compact ? 'text-base sm:text-lg' : 'text-lg sm:text-2xl'} font-bold mt-1 font-mono`}>
             {type === 'balance' && amount < 0 ? '-' : ''}
             {formatCurrency(amount)}
           </p>
           {subtitle && (
-            <p className="text-xs text-white/60 mt-1 truncate">{subtitle}</p>
+            <p className="text-xs text-white/60 mt-1">{subtitle}</p>
           )}
         </div>
         <div className={`p-2 rounded-xl ${styles.iconBg} flex-shrink-0`}>

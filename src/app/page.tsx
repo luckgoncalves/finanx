@@ -91,21 +91,21 @@ export default function Home() {
             Resumo {currentYear}
           </h3>
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
-            <div className="min-w-0">
+            <div>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">Entradas</p>
-              <p className="text-sm sm:text-base font-semibold text-emerald-600 dark:text-emerald-400 font-mono truncate">
+              <p className="text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
                 {yearlyData.totalIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
             </div>
-            <div className="min-w-0">
+            <div>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">Despesas</p>
-              <p className="text-sm sm:text-base font-semibold text-rose-600 dark:text-rose-400 font-mono truncate">
+              <p className="text-xs sm:text-sm font-semibold text-rose-600 dark:text-rose-400 font-mono">
                 {yearlyData.totalExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
             </div>
-            <div className="min-w-0">
+            <div>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">Saldo</p>
-              <p className={`text-sm sm:text-base font-semibold font-mono truncate ${yearlyData.balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+              <p className={`text-xs sm:text-sm font-semibold font-mono ${yearlyData.balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                 {yearlyData.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
             </div>

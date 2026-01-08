@@ -39,24 +39,24 @@ export default function DespesasPage() {
         {/* Paid vs Pending Summary */}
         {monthlyData.expenses.length > 0 && (
           <div className="grid grid-cols-2 gap-3 mt-4">
-            <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark min-w-0">
+            <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 flex-shrink-0" />
                 <span className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400">Pagas</span>
               </div>
-              <p className="text-base sm:text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 truncate">
+              <p className="text-sm sm:text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
                 {monthlyData.totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">
                 {monthlyData.expenses.filter(e => e.paid).length} de {monthlyData.expenses.length}
               </p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark min-w-0">
+            <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark">
               <div className="flex items-center gap-2 mb-2">
                 <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 flex-shrink-0" />
                 <span className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400">Pendentes</span>
               </div>
-              <p className="text-base sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400 truncate">
+              <p className="text-sm sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
                 {monthlyData.totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">
