@@ -112,7 +112,7 @@ export async function POST(request: Request) {
 
     if (isInstallment && totalInstallments > 1) {
       // Create multiple transactions for installments
-      let currentDate = new Date(date);
+      const currentDate = new Date(date);
       
       for (let i = 1; i <= totalInstallments; i++) {
         const installmentMonth = currentDate.getMonth() + 1;
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
       }
     } else if (isRecurring && recurringMonths > 1) {
       // Create multiple transactions for recurring
-      let currentDate = new Date(date);
+      const currentDate = new Date(date);
       
       for (let i = 0; i < recurringMonths; i++) {
         const recurringMonth = currentDate.getMonth() + 1;
