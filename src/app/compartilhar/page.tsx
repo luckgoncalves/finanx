@@ -188,14 +188,24 @@ export default function CompartilharPage() {
                 <p className="text-sm text-rose-600 dark:text-rose-400 mb-2">{push.error}</p>
               )}
               {push.isSubscribed ? (
-                <button
-                  type="button"
-                  onClick={() => push.unsubscribe()}
-                  disabled={push.loading}
-                  className="px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50"
-                >
-                  {push.loading ? 'Desativando...' : 'Desativar notificações'}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => push.unsubscribe()}
+                    disabled={push.loading}
+                    className="px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50"
+                  >
+                    {push.loading ? 'Desativando...' : 'Desativar notificações'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => push.clearAllSubscriptions?.()}
+                    disabled={push.loading}
+                    className="text-sm text-zinc-500 dark:text-zinc-400 hover:underline"
+                  >
+                    Reconfigurar (se receber 403)
+                  </button>
+                </div>
               ) : (
                 <button
                   type="button"

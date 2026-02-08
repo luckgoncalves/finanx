@@ -128,6 +128,25 @@ export function usePushNotifications() {
     }
   }, [registration]);
 
+  const clearAllSubscriptions = useCallback(async (): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await fetch('/api/push/subscribe/all', { method: 'DELETE' });
+      if (registration) {
+        const sub = await registration.pushManager.getSubscription();
+        if (sub) await sub.unsubscribe();
+      }
+      setIsSubscribed(false);
+      return true;
+    } catch {
+      setError('Erro ao limpar inscrições');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [registration]);
+
   return {
     isSupported,
     isIOS: isIOS ?? false,
@@ -137,6 +156,7 @@ export function usePushNotifications() {
     loading,
     error,
     subscribe,
+    clearAllSubscriptions,
     unsubscribe,
   };
 }
