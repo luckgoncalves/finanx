@@ -34,7 +34,23 @@ export async function GET(request: Request) {
       orderBy: { userId: 'asc' },
     });
 
+    const overdue = await prisma.transaction.findMany({
+      where: {
+        type: 'expense',
+        paid: false,
+        date: { lt: start },
+      },
+      select: { userId: true, description: true, amount: true },
+      orderBy: { userId: 'asc' },
+    });
+
     const byUser = dueToday.reduce((acc, t) => {
+      if (!acc[t.userId]) acc[t.userId] = [];
+      acc[t.userId].push(t);
+      return acc;
+    }, {} as Record<string, { description: string; amount: { toString(): string } }[]>);
+
+    const overdueByUser = overdue.reduce((acc, t) => {
       if (!acc[t.userId]) acc[t.userId] = [];
       acc[t.userId].push(t);
       return acc;
@@ -42,6 +58,8 @@ export async function GET(request: Request) {
 
     let sent = 0;
     let failed = 0;
+    let sentOverdue = 0;
+    let failedOverdue = 0;
 
     for (const [userId, transactions] of Object.entries(byUser)) {
       const subs = await prisma.pushSubscription.findMany({
@@ -79,12 +97,52 @@ export async function GET(request: Request) {
       }
     }
 
+    for (const [userId, transactions] of Object.entries(overdueByUser)) {
+      const subs = await prisma.pushSubscription.findMany({
+        where: { userId },
+      });
+      const count = transactions.length;
+      const firstTwo = transactions.slice(0, 2).map((t) => t.description);
+      const body =
+        count === 1
+          ? `1 conta atrasada: ${firstTwo[0]}`
+          : `${count} contas atrasadas${firstTwo.length ? `: ${firstTwo.join(', ')}${count > 2 ? '...' : ''}` : ''}`;
+      const payload = {
+        title: 'Contas atrasadas',
+        body,
+        tag: 'finanx-overdue',
+        data: { url: '/despesas' },
+      };
+
+      for (const sub of subs) {
+        const result = await sendPushNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: { p256dh: sub.p256dh, auth: sub.auth },
+          },
+          payload
+        );
+        if (result.success) {
+          sentOverdue++;
+        } else {
+          failedOverdue++;
+          if (result.statusCode === 410 || result.statusCode === 404) {
+            await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+          }
+        }
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       usersWithDue: Object.keys(byUser).length,
       totalDue: dueToday.length,
       sent,
       failed,
+      overdueByUserCount: Object.keys(overdueByUser).length,
+      totalOverdue: overdue.length,
+      sentOverdue,
+      failedOverdue,
     });
   } catch (error) {
     console.error('Cron daily-due error:', error);
