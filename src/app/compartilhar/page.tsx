@@ -173,6 +173,11 @@ export default function CompartilharPage() {
             </div>
           ) : (
             <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+              {push.isIOS && !push.isStandalone && (
+                <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
+                  No iPhone, abra o app pelo ícone na Tela Inicial (não pela aba do Safari) para ativar notificações.
+                </p>
+              )}
               <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-3">
                 Receber lembrete quando tiver contas vencendo no dia.
               </p>

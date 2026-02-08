@@ -56,8 +56,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Push subscribe error:', error);
+    const message =
+      error && typeof (error as { code?: string }).code === 'string'
+        ? (error as { code: string; message?: string }).message || 'Erro ao salvar inscrição.'
+        : 'Erro ao ativar notificações. Tente de novo.';
     return NextResponse.json(
-      { error: 'Erro ao ativar notificações' },
+      { error: message },
       { status: 500 }
     );
   }

@@ -31,15 +31,17 @@ export function usePushNotifications() {
 
   const isStandalone = isClient && (
     window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: fullscreen)').matches ||
+    window.matchMedia('(display-mode: minimal-ui)').matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true
   );
 
+  const hasServiceWorker = isClient && 'serviceWorker' in navigator;
+  const hasNotification = isClient && typeof Notification !== 'undefined';
   const isSupported = isClient &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window &&
-    Boolean(VAPID_PUBLIC) &&
-    (!isIOS || isStandalone);
+    hasServiceWorker &&
+    hasNotification &&
+    Boolean(VAPID_PUBLIC);
 
   useEffect(() => {
     if (!isSupported) return;
@@ -81,15 +83,16 @@ export function usePushNotifications() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscription: sub.toJSON() }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Erro ao ativar');
+        setError((data.error as string) || `Erro ${res.status}. Tente de novo.`);
         return false;
       }
       setIsSubscribed(true);
       return true;
-    } catch {
-      setError('Erro ao ativar notificações');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao ativar notificações';
+      setError(msg);
       return false;
     } finally {
       setLoading(false);
