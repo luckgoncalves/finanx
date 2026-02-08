@@ -267,13 +267,14 @@ export default function DespesasPage() {
         <TransactionList
           transactions={sortedExpenses}
           type="expense"
+          groupByDate={sortBy === 'date-desc' || sortBy === 'date-asc'}
           toolbarExtra={
             monthlyData.expenses.length > 0 ? (
               <div className="relative shrink-0" ref={sortMenuRef}>
                 <button
                   type="button"
                   onClick={() => setSortMenuOpen((open) => !open)}
-                  className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:outline-none focus:border-rose-500 dark:focus:border-rose-400 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                  className="h-11 min-w-11 inline-flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:outline-none focus:border-rose-500 dark:focus:border-rose-400 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                   aria-label="Ordenar despesas"
                   aria-expanded={sortMenuOpen}
                   aria-haspopup="true"

@@ -13,9 +13,11 @@ interface TransactionListProps {
   showCategory?: boolean;
   /** Conteúdo extra na mesma linha do botão Selecionar (ex.: botão de ordenar) */
   toolbarExtra?: React.ReactNode;
+  /** Quando false, lista plana (sem agrupar por data). Útil para ordenação por pagos/pendentes. */
+  groupByDate?: boolean;
 }
 
-export function TransactionList({ transactions, type, showCategory = true, toolbarExtra }: TransactionListProps) {
+export function TransactionList({ transactions, type, showCategory = true, toolbarExtra, groupByDate = true }: TransactionListProps) {
   const { state, deleteTransaction, togglePaid, isViewerMode } = useFinance();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -109,7 +111,7 @@ export function TransactionList({ transactions, type, showCategory = true, toolb
     );
   }
 
-  // Group transactions by date
+  // Group transactions by date (ou lista plana quando groupByDate = false)
   const groupedTransactions = transactions.reduce((groups, transaction) => {
     const date = transaction.date;
     if (!groups[date]) {
@@ -123,6 +125,154 @@ export function TransactionList({ transactions, type, showCategory = true, toolb
     new Date(b).getTime() - new Date(a).getTime()
   );
 
+  const renderTransactionCard = (transaction: Transaction) => {
+    const category = getCategoryInfo(transaction.category);
+    const isPaid = transaction.paid;
+    const isToggling = togglingId === transaction.id;
+
+    return (
+      <div
+        key={transaction.id}
+        className={`group p-4 rounded-2xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark transition-all ${
+          isPaid ? 'opacity-60' : ''
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          {selectionMode && !isViewerMode && (
+            <button
+              type="button"
+              onClick={() => toggleSelect(transaction.id)}
+              className={`shrink-0 mt-0.5 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all hover:scale-105 ${
+                selectedIds.has(transaction.id)
+                  ? type === 'income'
+                    ? 'border-emerald-500 bg-emerald-500'
+                    : 'border-rose-500 bg-rose-500'
+                  : 'border-zinc-300 dark:border-zinc-600 bg-transparent'
+              }`}
+              aria-label={selectedIds.has(transaction.id) ? 'Desmarcar' : 'Selecionar'}
+            >
+              {selectedIds.has(transaction.id) && (
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </button>
+          )}
+
+          {type === 'expense' && !isViewerMode && !selectionMode && (
+            <button
+              onClick={() => handleTogglePaid(transaction)}
+              disabled={isToggling}
+              className={`shrink-0 mt-0.5 transition-all ${
+                isToggling ? 'animate-pulse' : 'hover:scale-110'
+              }`}
+              aria-label={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+            >
+              {isToggling ? (
+                <div className="w-6 h-6 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+              ) : isPaid ? (
+                <CheckCircleSolid className="w-6 h-6 text-emerald-500" />
+              ) : (
+                <CheckCircleIcon className="w-6 h-6 text-zinc-300 dark:text-zinc-600 hover:text-emerald-500 dark:hover:text-emerald-400" />
+              )}
+            </button>
+          )}
+
+          <div className="flex-1">
+            <p className={`font-medium ${isPaid ? 'line-through text-zinc-400 dark:text-zinc-500' : ''}`}>
+              {transaction.description}
+            </p>
+            {transaction.isInstallment && transaction.installmentNumber && transaction.totalInstallments && (
+              <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 mt-1">
+                Parcela {transaction.installmentNumber}/{transaction.totalInstallments}
+              </span>
+            )}
+            {transaction.isRecurring && (
+              <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 mt-1">
+                Recorrente
+              </span>
+            )}
+            <p
+              className={`font-semibold font-mono mt-1 ${
+                type === 'income'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : isPaid
+                    ? 'text-zinc-400 dark:text-zinc-500 line-through'
+                    : 'text-rose-600 dark:text-rose-400'
+              }`}
+            >
+              {type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
+            </p>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {showCategory && category && (
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                    {category.name}
+                  </span>
+                </div>
+              )}
+              {!groupByDate && (
+                <span className="text-sm text-zinc-400 dark:text-zinc-500">
+                  {formatDate(transaction.date)}
+                </span>
+              )}
+              {isPaid && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  Pago
+                </span>
+              )}
+            </div>
+          </div>
+
+          {!isViewerMode && !selectionMode && (
+            <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => setEditingTransaction(transaction)}
+                disabled={deletingId === transaction.id}
+                className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700 transition-colors disabled:opacity-50"
+                aria-label="Editar"
+              >
+                <PencilIcon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-400" />
+              </button>
+              <button
+                onClick={() => handleDelete(transaction.id)}
+                disabled={deletingId === transaction.id}
+                className={`p-2 rounded-lg transition-colors ${
+                  confirmDeleteId === transaction.id || deletingId === transaction.id
+                    ? 'bg-rose-100 dark:bg-rose-900/30'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700'
+                }`}
+                aria-label={
+                  deletingId === transaction.id
+                    ? 'Excluindo...'
+                    : confirmDeleteId === transaction.id
+                      ? 'Confirmar exclusão'
+                      : 'Excluir'
+                }
+              >
+                {deletingId === transaction.id ? (
+                  <div className="w-5 h-5 sm:w-4 sm:h-4 rounded-full border-2 border-rose-500 border-t-transparent animate-spin" />
+                ) : (
+                  <TrashIcon
+                    className={`w-5 h-5 sm:w-4 sm:h-4 ${
+                      confirmDeleteId === transaction.id
+                        ? 'text-rose-500'
+                        : 'text-zinc-400'
+                    }`}
+                  />
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* Botão Selecionar / Sair da seleção + toolbar extra (oculto em modo visualização) */}
@@ -132,7 +282,7 @@ export function TransactionList({ transactions, type, showCategory = true, toolb
           <button
             type="button"
             onClick={() => (selectionMode ? exitSelectionMode() : setSelectionMode(true))}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            className="h-11 inline-flex items-center gap-2 px-3 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
           >
             {selectionMode ? (
               <>
@@ -183,172 +333,25 @@ export function TransactionList({ transactions, type, showCategory = true, toolb
       )}
 
       <div className="space-y-6">
-        {sortedDates.map((date) => (
-          <div key={date} className="animate-fade-in">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                {formatDate(date)}
-              </span>
-              <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+        {groupByDate ? (
+          sortedDates.map((date) => (
+            <div key={date} className="animate-fade-in">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                  {formatDate(date)}
+                </span>
+                <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+              </div>
+              <div className="space-y-3">
+                {groupedTransactions[date].map((t) => renderTransactionCard(t))}
+              </div>
             </div>
-
-            <div className="space-y-3">
-              {groupedTransactions[date].map((transaction) => {
-                const category = getCategoryInfo(transaction.category);
-                const isPaid = transaction.paid;
-                const isToggling = togglingId === transaction.id;
-                
-                return (
-                  <div
-                    key={transaction.id}
-                    className={`group p-4 rounded-2xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark transition-all ${
-                      isPaid ? 'opacity-60' : ''
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      {/* Checkbox de seleção (modo seleção, não em modo visualização) */}
-                      {selectionMode && !isViewerMode && (
-                        <button
-                          type="button"
-                          onClick={() => toggleSelect(transaction.id)}
-                          className={`shrink-0 mt-0.5 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all hover:scale-105 ${
-                            selectedIds.has(transaction.id)
-                              ? type === 'income'
-                                ? 'border-emerald-500 bg-emerald-500'
-                                : 'border-rose-500 bg-rose-500'
-                              : 'border-zinc-300 dark:border-zinc-600 bg-transparent'
-                          }`}
-                          aria-label={selectedIds.has(transaction.id) ? 'Desmarcar' : 'Selecionar'}
-                        >
-                          {selectedIds.has(transaction.id) && (
-                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </button>
-                      )}
-
-                      {/* Checkbox para marcar como pago (apenas despesas, não em modo visualização) */}
-                      {type === 'expense' && !isViewerMode && !selectionMode && (
-                        <button
-                          onClick={() => handleTogglePaid(transaction)}
-                          disabled={isToggling}
-                          className={`shrink-0 mt-0.5 transition-all ${
-                            isToggling ? 'animate-pulse' : 'hover:scale-110'
-                          }`}
-                          aria-label={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
-                        >
-                          {isToggling ? (
-                            <div className="w-6 h-6 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-                          ) : isPaid ? (
-                            <CheckCircleSolid className="w-6 h-6 text-emerald-500" />
-                          ) : (
-                            <CheckCircleIcon className="w-6 h-6 text-zinc-300 dark:text-zinc-600 hover:text-emerald-500 dark:hover:text-emerald-400" />
-                          )}
-                        </button>
-                      )}
-
-                      {/* Conteúdo principal */}
-                      <div className="flex-1">
-                        {/* Descrição */}
-                        <p className={`font-medium ${isPaid ? 'line-through text-zinc-400 dark:text-zinc-500' : ''}`}>
-                          {transaction.description}
-                        </p>
-                        
-                        {/* Badge de parcelamento ou recorrente */}
-                        {transaction.isInstallment && transaction.installmentNumber && transaction.totalInstallments && (
-                          <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 mt-1">
-                            Parcela {transaction.installmentNumber}/{transaction.totalInstallments}
-                          </span>
-                        )}
-                        {transaction.isRecurring && (
-                          <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 mt-1">
-                            Recorrente
-                          </span>
-                        )}
-                        
-                        {/* Valor */}
-                        <p
-                          className={`font-semibold font-mono mt-1 ${
-                            type === 'income'
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : isPaid 
-                                ? 'text-zinc-400 dark:text-zinc-500 line-through'
-                                : 'text-rose-600 dark:text-rose-400'
-                          }`}
-                        >
-                          {type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
-                        </p>
-                        
-                        {/* Categoria */}
-                        <div className="flex items-center gap-2 mt-2">
-                          {showCategory && category && (
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="w-2.5 h-2.5 rounded-full"
-                                style={{ backgroundColor: category.color }}
-                              />
-                              <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                                {category.name}
-                              </span>
-                            </div>
-                          )}
-                          {isPaid && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                              Pago
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Ações - ocultas em modo somente leitura ou em modo seleção */}
-                      {!isViewerMode && !selectionMode && (
-                      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => setEditingTransaction(transaction)}
-                          disabled={deletingId === transaction.id}
-                          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700 transition-colors disabled:opacity-50"
-                          aria-label="Editar"
-                        >
-                          <PencilIcon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-400" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(transaction.id)}
-                          disabled={deletingId === transaction.id}
-                          className={`p-2 rounded-lg transition-colors ${
-                            confirmDeleteId === transaction.id || deletingId === transaction.id
-                              ? 'bg-rose-100 dark:bg-rose-900/30'
-                              : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700'
-                          }`}
-                          aria-label={
-                            deletingId === transaction.id 
-                              ? 'Excluindo...' 
-                              : confirmDeleteId === transaction.id 
-                                ? 'Confirmar exclusão' 
-                                : 'Excluir'
-                          }
-                        >
-                          {deletingId === transaction.id ? (
-                            <div className="w-5 h-5 sm:w-4 sm:h-4 rounded-full border-2 border-rose-500 border-t-transparent animate-spin" />
-                          ) : (
-                            <TrashIcon
-                              className={`w-5 h-5 sm:w-4 sm:h-4 ${
-                                confirmDeleteId === transaction.id
-                                  ? 'text-rose-500'
-                                  : 'text-zinc-400'
-                              }`}
-                            />
-                          )}
-                        </button>
-                      </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          ))
+        ) : (
+          <div className="space-y-3">
+            {transactions.map((t) => renderTransactionCard(t))}
           </div>
-        ))}
+        )}
       </div>
 
       {editingTransaction && (
