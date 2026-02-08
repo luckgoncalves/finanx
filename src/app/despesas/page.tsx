@@ -48,15 +48,9 @@ export default function DespesasPage() {
       case 'date-asc':
         return list.sort(byDateAsc);
       case 'paid-first':
-        return list.sort((a, b) => {
-          if (a.paid !== b.paid) return a.paid ? -1 : 1;
-          return byDate(a, b);
-        });
+        return list.sort((a, b) => (a.paid !== b.paid ? (a.paid ? -1 : 1) : 0));
       case 'pending-first':
-        return list.sort((a, b) => {
-          if (a.paid !== b.paid) return b.paid ? -1 : 1;
-          return byDate(a, b);
-        });
+        return list.sort((a, b) => (a.paid !== b.paid ? (b.paid ? -1 : 1) : 0));
       default:
         return list.sort(byDate);
     }

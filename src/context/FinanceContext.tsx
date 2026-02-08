@@ -154,12 +154,25 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          dispatch({ type: 'SET_STATE', payload: parsed });
+          // Restaurar dados mas sempre abrir no mês atual
+          const now = new Date();
+          dispatch({
+            type: 'SET_STATE',
+            payload: {
+              ...parsed,
+              currentMonth: now.getMonth() + 1,
+              currentYear: now.getFullYear(),
+            },
+          });
         } catch (e) {
           console.error('Error loading saved data:', e);
         }
       }
     }
+
+    // Sempre exibir o mês atual ao abrir o app
+    const now = new Date();
+    dispatch({ type: 'SET_MONTH', payload: { month: now.getMonth() + 1, year: now.getFullYear() } });
 
     dispatch({ type: 'SET_LOADING', payload: false });
   }, [user, isDatabaseConfigured, viewAsOwnerId]);
