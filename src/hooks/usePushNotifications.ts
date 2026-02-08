@@ -22,18 +22,19 @@ export function usePushNotifications() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isIOS =
-    typeof window !== 'undefined' &&
+  const isClient = typeof window !== 'undefined' && typeof navigator !== 'undefined';
+
+  const isIOS = isClient && (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
 
-  const isStandalone =
-    typeof window !== 'undefined' &&
-    (window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true);
+  const isStandalone = isClient && (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
 
-  const isSupported =
-    typeof window !== 'undefined' &&
+  const isSupported = isClient &&
     'serviceWorker' in navigator &&
     'PushManager' in window &&
     'Notification' in window &&
