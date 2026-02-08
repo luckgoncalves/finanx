@@ -64,3 +64,31 @@ export function hashPassword(password: string): string {
 export function verifyPassword(password: string, hash: string): boolean {
   return hashPassword(password) === hash;
 }
+
+/**
+ * Returns the userId whose data should be read.
+ * If viewAsOwnerId is provided, checks that the current user is an accepted viewer of that account.
+ * Otherwise returns session.userId.
+ */
+export async function getEffectiveOwnerId(
+  session: UserPayload,
+  viewAsOwnerId: string | null
+): Promise<{ userId: string; isViewer: boolean } | null> {
+  if (!viewAsOwnerId || viewAsOwnerId === session.userId) {
+    return { userId: session.userId, isViewer: false };
+  }
+
+  const share = await prisma.accountShare.findFirst({
+    where: {
+      ownerId: viewAsOwnerId,
+      viewerId: session.userId,
+      status: 'ACCEPTED',
+    },
+  });
+
+  if (!share) {
+    return null;
+  }
+
+  return { userId: viewAsOwnerId, isViewer: true };
+}

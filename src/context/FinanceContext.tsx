@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
+import { useShare } from './ShareContext';
 import {
   Transaction,
   Category,
@@ -39,6 +40,7 @@ interface AddTransactionData {
 interface FinanceContextType {
   state: FinanceState;
   loading: boolean;
+  isViewerMode: boolean;
   addTransaction: (transaction: AddTransactionData) => Promise<void>;
   updateTransaction: (transaction: Transaction) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -119,6 +121,7 @@ const STORAGE_KEY = 'finanx-data';
 export function FinanceProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(financeReducer, { ...initialState, loading: true });
   const { user } = useAuth();
+  const { viewAsOwnerId } = useShare();
 
   // Check if database is configured
   const isDatabaseConfigured = process.env.NEXT_PUBLIC_DATABASE_ENABLED === 'true';
@@ -130,13 +133,17 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_LOADING', payload: true });
 
     if (isDatabaseConfigured && user) {
-      // Load from API
       try {
-        const res = await fetch('/api/transactions');
+        const url = viewAsOwnerId
+          ? `/api/transactions?viewAs=${encodeURIComponent(viewAsOwnerId)}`
+          : '/api/transactions';
+        const res = await fetch(url);
         const data = await res.json();
 
         if (data.transactions) {
           dispatch({ type: 'SET_TRANSACTIONS', payload: data.transactions });
+        } else if (res.status === 403) {
+          dispatch({ type: 'SET_TRANSACTIONS', payload: [] });
         }
       } catch (error) {
         console.error('Error loading from API:', error);
@@ -155,7 +162,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     }
 
     dispatch({ type: 'SET_LOADING', payload: false });
-  }, [user, isDatabaseConfigured]);
+  }, [user, isDatabaseConfigured, viewAsOwnerId]);
 
   useEffect(() => {
     loadData();
@@ -170,7 +177,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     }
   }, [state, user, isDatabaseConfigured]);
 
+  const isViewerMode = viewAsOwnerId != null;
+
   const addTransaction = async (transaction: AddTransactionData) => {
+    if (isViewerMode) return;
     if (isDatabaseConfigured && user) {
       try {
         const res = await fetch('/api/transactions', {
@@ -221,6 +231,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   };
 
   const updateTransaction = async (transaction: Transaction) => {
+    if (isViewerMode) return;
     if (isDatabaseConfigured && user) {
       try {
         const res = await fetch(`/api/transactions/${transaction.id}`, {
@@ -246,6 +257,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteTransaction = async (id: string) => {
+    if (isViewerMode) return;
     if (isDatabaseConfigured && user) {
       try {
         const res = await fetch(`/api/transactions/${id}`, {
@@ -265,6 +277,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   };
 
   const togglePaid = async (id: string, paid: boolean) => {
+    if (isViewerMode) return;
     if (isDatabaseConfigured && user) {
       try {
         const res = await fetch(`/api/transactions/${id}`, {
@@ -360,6 +373,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       value={{
         state,
         loading: state.loading,
+        isViewerMode,
         addTransaction,
         updateTransaction,
         deleteTransaction,

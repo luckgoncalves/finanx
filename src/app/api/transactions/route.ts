@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { getSession, getEffectiveOwnerId } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 
 // Helper to format transaction for response
@@ -57,8 +57,23 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const year = searchParams.get('year');
     const month = searchParams.get('month');
+    const viewAs = searchParams.get('viewAs');
 
-    const where: { userId: string; year?: number; month?: number } = { userId: session.userId };
+    const effective = await getEffectiveOwnerId(session, viewAs);
+    if (!effective) {
+      if (viewAs) {
+        return NextResponse.json(
+          { error: 'Você não tem permissão para visualizar esta conta' },
+          { status: 403 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      );
+    }
+
+    const where: { userId: string; year?: number; month?: number } = { userId: effective.userId };
     
     if (year) where.year = parseInt(year);
     if (month) where.month = parseInt(month);

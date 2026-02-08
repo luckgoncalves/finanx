@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon, UserIcon } from '@heroicons/react/24/outline';
 
@@ -16,6 +16,8 @@ export default function LoginPage() {
   
   const { signIn, signUp } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,14 +30,14 @@ export default function LoginPage() {
         if (error) {
           setError(error);
         } else {
-          router.push('/');
+          router.push(redirectTo.startsWith('/') ? redirectTo : '/');
         }
       } else {
         const { error } = await signUp(email, password, name);
         if (error) {
           setError(error);
         } else {
-          router.push('/');
+          router.push(redirectTo.startsWith('/') ? redirectTo : '/');
         }
       }
     } catch {

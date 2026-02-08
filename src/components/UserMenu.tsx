@@ -2,13 +2,19 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useShare } from '@/context/ShareContext';
+import { useFinance } from '@/context/FinanceContext';
 import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   CloudIcon,
   ServerIcon,
   AcademicCapIcon,
+  ShareIcon,
+  UserGroupIcon,
+  CheckIcon,
 } from '@heroicons/react/24/outline';
 
 interface UserMenuProps {
@@ -17,10 +23,18 @@ interface UserMenuProps {
 
 export function UserMenu({ onShowOnboarding }: UserMenuProps) {
   const { user, signOut, loading } = useAuth();
+  const { viewAsOwnerId, setViewAs, sharedAccountsAsViewer } = useShare();
+  const { refreshData } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  const handleSwitchAccount = (ownerId: string | null) => {
+    setViewAs(ownerId);
+    refreshData();
+    setIsOpen(false);
+  };
 
   // Check if database is configured
   const isDatabaseConfigured = !!process.env.NEXT_PUBLIC_DATABASE_ENABLED;
@@ -110,6 +124,56 @@ export function UserMenu({ onShowOnboarding }: UserMenuProps) {
               </span>
             </div>
           </div>
+
+          {sharedAccountsAsViewer.length > 0 && (
+            <div className="border-b border-zinc-200 dark:border-zinc-800 py-2">
+              <p className="px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+                Conta
+              </p>
+              <button
+                onClick={() => handleSwitchAccount(null)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                  !viewAsOwnerId
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                }`}
+              >
+                {!viewAsOwnerId ? (
+                  <CheckIcon className="w-5 h-5 text-emerald-500" />
+                ) : (
+                  <UserCircleIcon className="w-5 h-5 text-zinc-400" />
+                )}
+                <span>Minha conta</span>
+              </button>
+              {sharedAccountsAsViewer.map((acc) => (
+                <button
+                  key={acc.id}
+                  onClick={() => handleSwitchAccount(acc.ownerId)}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                    viewAsOwnerId === acc.ownerId
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {viewAsOwnerId === acc.ownerId ? (
+                    <CheckIcon className="w-5 h-5 text-emerald-500" />
+                  ) : (
+                    <UserGroupIcon className="w-5 h-5 text-zinc-400" />
+                  )}
+                  <span>Conta de {acc.owner?.name || acc.owner?.email || '...'}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <Link
+            href="/compartilhar"
+            onClick={() => setIsOpen(false)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <ShareIcon className="w-5 h-5 text-emerald-500" />
+            Compartilhar conta
+          </Link>
 
           <button
             onClick={handleShowTutorial}

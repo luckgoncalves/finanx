@@ -5,13 +5,14 @@ import { useOnboarding } from '@/context/OnboardingContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
 import { UserMenu } from '@/components/UserMenu';
+import { ViewerBanner } from '@/components/ViewerBanner';
 import { DashboardSkeleton } from '@/components/Skeleton';
 import { MONTHS } from '@/types/finance';
 import Link from 'next/link';
 import { PlusIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
-  const { state, getMonthlyData, getYearlyTotal, loading } = useFinance();
+  const { state, getMonthlyData, getYearlyTotal, loading, isViewerMode } = useFinance();
   const { showOnboarding } = useOnboarding();
   const { currentMonth, currentYear } = state;
   
@@ -29,6 +30,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      <ViewerBanner />
       {/* Header */}
       <header className="px-6 pt-8 pb-6">
         <div className="flex items-center justify-between mb-4">
@@ -71,7 +73,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Quick Actions */}
+      {/* Quick Actions (ocultos em modo visualização) */}
+      {!isViewerMode && (
       <section className="px-6 mb-6">
         <div className="flex gap-3">
           <Link
@@ -90,6 +93,7 @@ export default function Home() {
           </Link>
         </div>
       </section>
+      )}
 
       {/* Year Summary */}
       <section className="px-6 mb-6">

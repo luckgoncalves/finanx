@@ -6,13 +6,14 @@ import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
 import { TransactionList } from '@/components/TransactionList';
 import { TransactionForm } from '@/components/TransactionForm';
+import { ViewerBanner } from '@/components/ViewerBanner';
 import { DespesasPageSkeleton } from '@/components/Skeleton';
 import { PlusIcon, CheckCircleIcon, ClockIcon, ChartBarIcon, ListBulletIcon } from '@heroicons/react/24/outline';
 
 export default function DespesasPage() {
   const [showForm, setShowForm] = useState(false);
   const [viewMode, setViewMode] = useState<'dashboard' | 'list'>('dashboard');
-  const { state, getMonthlyData, loading } = useFinance();
+  const { state, getMonthlyData, loading, isViewerMode } = useFinance();
   const { currentMonth, currentYear } = state;
   
   const monthlyData = getMonthlyData(currentMonth, currentYear);
@@ -24,6 +25,7 @@ export default function DespesasPage() {
 
   return (
     <div className="min-h-screen">
+      <ViewerBanner />
       {/* Header */}
       <header className="px-6 pt-8 pb-6">
         <div className="flex items-center justify-between mb-6">
@@ -231,21 +233,23 @@ export default function DespesasPage() {
         />
       </section>
 
-      {/* FAB - Add Button */}
-      <button
-        onClick={() => setShowForm(true)}
-        className="fixed right-6 bottom-24 md:bottom-6 w-14 h-14 rounded-full bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg shadow-rose-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-40"
-        aria-label="Adicionar despesa"
-      >
-        <PlusIcon className="w-7 h-7" />
-      </button>
-
-      {/* Form Modal */}
-      {showForm && (
-        <TransactionForm
-          type="expense"
-          onClose={() => setShowForm(false)}
-        />
+      {/* FAB - Add Button (oculto em modo visualização) */}
+      {!isViewerMode && (
+        <>
+          <button
+            onClick={() => setShowForm(true)}
+            className="fixed right-6 bottom-24 md:bottom-6 w-14 h-14 rounded-full bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg shadow-rose-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-40"
+            aria-label="Adicionar despesa"
+          >
+            <PlusIcon className="w-7 h-7" />
+          </button>
+          {showForm && (
+            <TransactionForm
+              type="expense"
+              onClose={() => setShowForm(false)}
+            />
+          )}
+        </>
       )}
     </div>
   );

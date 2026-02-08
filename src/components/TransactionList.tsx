@@ -14,7 +14,7 @@ interface TransactionListProps {
 }
 
 export function TransactionList({ transactions, type, showCategory = true }: TransactionListProps) {
-  const { state, deleteTransaction, togglePaid } = useFinance();
+  const { state, deleteTransaction, togglePaid, isViewerMode } = useFinance();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -121,8 +121,8 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      {/* Checkbox para marcar como pago (apenas despesas) */}
-                      {type === 'expense' && (
+                      {/* Checkbox para marcar como pago (apenas despesas, não em modo visualização) */}
+                      {type === 'expense' && !isViewerMode && (
                         <button
                           onClick={() => handleTogglePaid(transaction)}
                           disabled={isToggling}
@@ -194,7 +194,8 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                         </div>
                       </div>
 
-                      {/* Ações - sempre visível no mobile, hover no desktop */}
+                      {/* Ações - ocultas em modo somente leitura */}
+                      {!isViewerMode && (
                       <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingTransaction(transaction)}
@@ -233,6 +234,7 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                           )}
                         </button>
                       </div>
+                      )}
                     </div>
                   </div>
                 );

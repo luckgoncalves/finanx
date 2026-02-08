@@ -2,6 +2,7 @@
 
 import { useFinance } from '@/context/FinanceContext';
 import { MonthSelector } from '@/components/MonthSelector';
+import { ViewerBanner } from '@/components/ViewerBanner';
 import { MONTHS } from '@/types/finance';
 
 export default function RelatoriosPage() {
@@ -54,6 +55,7 @@ export default function RelatoriosPage() {
 
   return (
     <div className="min-h-screen">
+      <ViewerBanner />
       {/* Header */}
       <header className="px-6 pt-8 pb-6">
         <div className="flex items-center justify-between mb-6">

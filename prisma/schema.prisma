@@ -8,17 +8,38 @@ datasource db {
 }
 
 model User {
-  id                  String        @id @default(uuid())
-  email               String        @unique
+  id                  String         @id @default(uuid())
+  email               String         @unique
   name                String?
   password            String
-  onboardingCompleted Boolean       @default(false) @map("onboarding_completed")
-  createdAt           DateTime      @default(now()) @map("created_at")
-  updatedAt           DateTime      @updatedAt @map("updated_at")
+  onboardingCompleted Boolean        @default(false) @map("onboarding_completed")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
   transactions        Transaction[]
   categories          Category[]
+  sharedAsOwner       AccountShare[] @relation("ShareOwner")
+  sharedAsViewer      AccountShare[] @relation("ShareViewer")
 
   @@map("users")
+}
+
+model AccountShare {
+  id           String   @id @default(uuid())
+  ownerId      String   @map("owner_id")
+  viewerId     String?  @map("viewer_id")
+  inviteeEmail String   @map("invitee_email")
+  token        String   @unique
+  status       String   // PENDING | ACCEPTED | REJECTED
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  owner  User  @relation("ShareOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  viewer User? @relation("ShareViewer", fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([viewerId])
+  @@index([token])
+  @@index([status])
+  @@map("account_shares")
 }
 
 model Transaction {
