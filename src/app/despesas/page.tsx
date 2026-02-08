@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
@@ -36,7 +36,7 @@ export default function DespesasPage() {
   const monthlyData = getMonthlyData(currentMonth, currentYear);
   const categorySummary = getCategorySummary(monthlyData.expenses, state.categories);
 
-  const sortedExpenses = useMemo(() => {
+  const sortedExpenses = (() => {
     const list = [...monthlyData.expenses];
     const byDate = (a: Transaction, b: Transaction) =>
       new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -60,7 +60,7 @@ export default function DespesasPage() {
       default:
         return list.sort(byDate);
     }
-  }, [monthlyData.expenses, sortBy]);
+  })();
 
   if (loading) {
     return <DespesasPageSkeleton />;
@@ -167,7 +167,7 @@ export default function DespesasPage() {
                       className="text-zinc-100 dark:text-zinc-800"
                     />
                     {/* Category segments */}
-                    {categorySummary.reduce((acc, cat, index) => {
+                    {categorySummary.reduce((acc, cat) => {
                       const circumference = 2 * Math.PI * 70;
                       const offset = acc.offset;
                       const length = (cat.percentage / 100) * circumference;
