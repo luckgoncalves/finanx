@@ -12,7 +12,9 @@ import {
   TrashIcon,
   LinkIcon,
   ClipboardDocumentIcon,
+  BellAlertIcon,
 } from '@heroicons/react/24/outline';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 type ShareAsOwner = {
   id: string;
@@ -34,6 +36,7 @@ export default function CompartilharPage() {
   const [inviteSuccess, setInviteSuccess] = useState<{ token: string } | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const push = usePushNotifications();
 
   const fetchShares = async () => {
     try {
@@ -145,6 +148,47 @@ export default function CompartilharPage() {
       </header>
 
       <div className="px-6 py-6 space-y-8">
+        {/* Notificações push */}
+        <section>
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <BellAlertIcon className="w-5 h-5 text-emerald-500" />
+            Notificações
+          </h2>
+          {!push.isSupported ? (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Notificações não estão disponíveis neste navegador. Use Chrome, Edge ou Safari no celular.
+            </p>
+          ) : (
+            <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-3">
+                Receber lembrete quando tiver contas vencendo no dia.
+              </p>
+              {push.error && (
+                <p className="text-sm text-rose-600 dark:text-rose-400 mb-2">{push.error}</p>
+              )}
+              {push.isSubscribed ? (
+                <button
+                  type="button"
+                  onClick={() => push.unsubscribe()}
+                  disabled={push.loading}
+                  className="px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50"
+                >
+                  {push.loading ? 'Desativando...' : 'Desativar notificações'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => push.subscribe()}
+                  disabled={push.loading}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 disabled:opacity-50"
+                >
+                  {push.loading ? 'Ativando...' : 'Ativar notificações'}
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+
         {/* Convidar por email */}
         <section>
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">

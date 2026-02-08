@@ -1,0 +1,31 @@
+# Lembrete diário: contas vencendo hoje (notificações push)
+# Configurar em: Settings > Secrets and variables > Actions
+# - API_BASE_URL: URL do app em produção (ex: https://finanx.vercel.app)
+# - CRON_SECRET: mesmo valor da variável CRON_SECRET no Vercel/ambiente
+
+name: Daily due reminder
+
+on:
+  schedule:
+    - cron: '0 11 * * *'   # 11h UTC (8h BRT)
+  workflow_dispatch:       # permite rodar manualmente
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call daily-due API
+        run: |
+          curl -sS -w "\n%{http_code}" -X GET "${{ secrets.API_BASE_URL }}/api/cron/daily-due" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -o /tmp/out
+          HTTP_CODE=$(tail -n1 /tmp/out)
+          BODY=$(head -n-1 /tmp/out)
+          echo "Response: $BODY"
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "OK ($HTTP_CODE)"
+            exit 0
+          else
+            echo "Failed with HTTP $HTTP_CODE"
+            exit 1
+          fi

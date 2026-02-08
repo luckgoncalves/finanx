@@ -8,19 +8,35 @@ datasource db {
 }
 
 model User {
-  id                  String         @id @default(uuid())
-  email               String         @unique
+  id                  String              @id @default(uuid())
+  email               String              @unique
   name                String?
   password            String
-  onboardingCompleted Boolean        @default(false) @map("onboarding_completed")
-  createdAt           DateTime       @default(now()) @map("created_at")
-  updatedAt           DateTime       @updatedAt @map("updated_at")
+  onboardingCompleted Boolean             @default(false) @map("onboarding_completed")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
   transactions        Transaction[]
   categories          Category[]
-  sharedAsOwner       AccountShare[] @relation("ShareOwner")
-  sharedAsViewer      AccountShare[] @relation("ShareViewer")
+  sharedAsOwner       AccountShare[]      @relation("ShareOwner")
+  sharedAsViewer      AccountShare[]      @relation("ShareViewer")
+  pushSubscriptions   PushSubscription[]
 
   @@map("users")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  endpoint  String
+  p256dh    String   @map("p256dh")
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 model AccountShare {
