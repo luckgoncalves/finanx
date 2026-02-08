@@ -64,11 +64,11 @@
 - [x] Opção de rever tutorial
 
 ### Compartilhamento de Conta (Visualizadores)
-- [ ] Titular pode convidar usuários para visualizar a conta (ex: por email)
-- [ ] Visualizadores acessam a mesma conta em modo somente leitura
-- [ ] Visualizadores veem dashboard, gastos, entradas e resumos (sem editar/excluir)
-- [ ] Titular gerencia lista de visualizadores (adicionar/remover)
-- [ ] Aceitar/rejeitar convite para ser visualizador
+- [x] Titular pode convidar usuários para visualizar a conta (ex: por email)
+- [x] Visualizadores acessam a mesma conta em modo somente leitura
+- [x] Visualizadores veem dashboard, gastos, entradas e resumos (sem editar/excluir)
+- [x] Titular gerencia lista de visualizadores (adicionar/remover)
+- [x] Aceitar/rejeitar convite para ser visualizador
 
 > **Futuro (Premium):** O visualizador poder ter conta própria no FinanX e alternar entre "Minha conta" e "Conta que visualizo" — como ter duas contas e trocar entre elas (ex: eu tenho minha conta e a da família que meu cônjuge compartilhou).
 

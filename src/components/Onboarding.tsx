@@ -8,6 +8,7 @@ import {
   CalendarDaysIcon,
   ArrowDownTrayIcon,
   SparklesIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 interface OnboardingProps {
@@ -63,6 +64,15 @@ const slides = [
   },
   {
     id: 6,
+    icon: UserGroupIcon,
+    title: 'Compartilhar Conta',
+    description: 'Convide outras pessoas (ex: cônjuge, família) para visualizar sua conta em modo somente leitura. Você gerencia quem tem acesso e pode adicionar ou remover visualizadores quando quiser.',
+    color: 'from-indigo-500 to-blue-500',
+    iconBg: 'bg-indigo-500/20',
+    iconColor: 'text-indigo-500',
+  },
+  {
+    id: 7,
     icon: ArrowDownTrayIcon,
     title: 'Instale o App',
     description: 'Adicione o FinanX à sua tela inicial para acesso rápido. É um PWA que funciona offline!',
