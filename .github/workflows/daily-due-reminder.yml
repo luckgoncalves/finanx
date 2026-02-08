@@ -14,6 +14,16 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
+      - name: Check secrets
+        run: |
+          if [ -z "${{ secrets.API_BASE_URL }}" ]; then
+            echo "::error::Configure o secret API_BASE_URL em Settings > Secrets > Actions (ex: https://seu-app.vercel.app)"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CRON_SECRET }}" ]; then
+            echo "::error::Configure o secret CRON_SECRET em Settings > Secrets > Actions"
+            exit 1
+          fi
       - name: Call daily-due API
         run: |
           curl -sS -w "\n%{http_code}" -X GET "${{ secrets.API_BASE_URL }}/api/cron/daily-due" \
