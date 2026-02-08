@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { TrashIcon, PencilIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { useState, useMemo } from 'react';
+import { TrashIcon, PencilIcon, CheckCircleIcon, Squares2X2Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
 import { useFinance } from '@/context/FinanceContext';
 import { Transaction, TransactionType } from '@/types/finance';
@@ -19,6 +19,32 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const selectedSum = useMemo(() => {
+    return transactions
+      .filter((t) => selectedIds.has(t.id))
+      .reduce((acc, t) => acc + t.amount, 0);
+  }, [transactions, selectedIds]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
 
   const getCategoryInfo = (categoryId: string) => {
     return state.categories.find((c) => c.id === categoryId);
@@ -97,6 +123,62 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
 
   return (
     <>
+      {/* Botão Selecionar / Sair da seleção (oculto em modo visualização) */}
+      {!isViewerMode && (
+        <div className="flex justify-end mb-4">
+          <button
+            type="button"
+            onClick={() => (selectionMode ? exitSelectionMode() : setSelectionMode(true))}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+          >
+            {selectionMode ? (
+              <>
+                <XMarkIcon className="w-4 h-4" />
+                Sair da seleção
+              </>
+            ) : (
+              <>
+                <Squares2X2Icon className="w-4 h-4" />
+                Selecionar
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Barra da soma dos itens selecionados */}
+      {selectionMode && selectedIds.size > 0 && (
+        <div
+          className={`mb-4 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 ${
+            type === 'income'
+              ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20'
+              : 'bg-rose-500/10 dark:bg-rose-500/20 border border-rose-500/20'
+          }`}
+        >
+          <div>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              {selectedIds.size} {selectedIds.size === 1 ? 'item selecionado' : 'itens selecionados'}
+            </p>
+            <p
+              className={`font-semibold font-mono text-lg ${
+                type === 'income'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-rose-600 dark:text-rose-400'
+              }`}
+            >
+              {type === 'income' ? '+' : '-'} {formatCurrency(selectedSum)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-700 transition-colors"
+          >
+            Limpar
+          </button>
+        </div>
+      )}
+
       <div className="space-y-6">
         {sortedDates.map((date) => (
           <div key={date} className="animate-fade-in">
@@ -121,12 +203,34 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                     }`}
                   >
                     <div className="flex items-start gap-3">
+                      {/* Checkbox de seleção (modo seleção, não em modo visualização) */}
+                      {selectionMode && !isViewerMode && (
+                        <button
+                          type="button"
+                          onClick={() => toggleSelect(transaction.id)}
+                          className={`shrink-0 mt-0.5 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all hover:scale-105 ${
+                            selectedIds.has(transaction.id)
+                              ? type === 'income'
+                                ? 'border-emerald-500 bg-emerald-500'
+                                : 'border-rose-500 bg-rose-500'
+                              : 'border-zinc-300 dark:border-zinc-600 bg-transparent'
+                          }`}
+                          aria-label={selectedIds.has(transaction.id) ? 'Desmarcar' : 'Selecionar'}
+                        >
+                          {selectedIds.has(transaction.id) && (
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      )}
+
                       {/* Checkbox para marcar como pago (apenas despesas, não em modo visualização) */}
-                      {type === 'expense' && !isViewerMode && (
+                      {type === 'expense' && !isViewerMode && !selectionMode && (
                         <button
                           onClick={() => handleTogglePaid(transaction)}
                           disabled={isToggling}
-                          className={`flex-shrink-0 mt-0.5 transition-all ${
+                          className={`shrink-0 mt-0.5 transition-all ${
                             isToggling ? 'animate-pulse' : 'hover:scale-110'
                           }`}
                           aria-label={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
@@ -194,8 +298,8 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
                         </div>
                       </div>
 
-                      {/* Ações - ocultas em modo somente leitura */}
-                      {!isViewerMode && (
+                      {/* Ações - ocultas em modo somente leitura ou em modo seleção */}
+                      {!isViewerMode && !selectionMode && (
                       <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingTransaction(transaction)}
