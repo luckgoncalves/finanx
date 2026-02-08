@@ -61,7 +61,7 @@ export function usePushNotifications() {
       return false;
     }
     if (!VAPID_PUBLIC) {
-      setError('App precisa ser atualizado. Feche o app por completo e abra de novo pelo ícone na Tela Inicial.');
+      setError('Chave de notificação não está no app. No Vercel, confira a variável NEXT_PUBLIC_VAPID_PUBLIC_KEY e faça um novo deploy (Redeploy).');
       return false;
     }
     setLoading(true);
