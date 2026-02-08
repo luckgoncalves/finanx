@@ -18,13 +18,15 @@ export interface PushPayload {
   data?: { url?: string };
 }
 
+export type SendPushResult = { success: true } | { success: false; statusCode?: number; message?: string };
+
 export async function sendPushNotification(
   subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
   payload: PushPayload
-): Promise<boolean> {
+): Promise<SendPushResult> {
   if (!privateKey || !publicKey) {
     console.warn('VAPID keys not set, skipping push');
-    return false;
+    return { success: false, message: 'VAPID not set' };
   }
   try {
     await webPush.sendNotification(
@@ -38,14 +40,15 @@ export async function sendPushNotification(
       JSON.stringify(payload),
       { TTL: 86400 }
     );
-    return true;
+    return { success: true };
   } catch (err) {
     const status = (err as { statusCode?: number })?.statusCode;
+    const message = (err as { message?: string })?.message ?? String(err);
+    console.error('[web-push] statusCode:', status, 'message:', message);
     if (status === 410 || status === 404) {
-      return false;
+      return { success: false, statusCode: status };
     }
-    console.error('web-push error:', err);
-    return false;
+    return { success: false, statusCode: status, message };
   }
 }
 

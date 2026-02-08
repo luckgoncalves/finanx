@@ -61,15 +61,21 @@ export async function GET(request: Request) {
       };
 
       for (const sub of subs) {
-        const ok = await sendPushNotification(
+        const result = await sendPushNotification(
           {
             endpoint: sub.endpoint,
             keys: { p256dh: sub.p256dh, auth: sub.auth },
           },
           payload
         );
-        if (ok) sent++;
-        else failed++;
+        if (result.success) {
+          sent++;
+        } else {
+          failed++;
+          if (result.statusCode === 410 || result.statusCode === 404) {
+            await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+          }
+        }
       }
     }
 
