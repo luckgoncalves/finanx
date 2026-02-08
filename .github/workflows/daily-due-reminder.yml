@@ -26,12 +26,12 @@ jobs:
           fi
       - name: Call daily-due API
         run: |
-          curl -sS -w "\n%{http_code}" -X GET "${{ secrets.API_BASE_URL }}/api/cron/daily-due" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -o /tmp/out
-          HTTP_CODE=$(tail -n1 /tmp/out)
-          BODY=$(head -n-1 /tmp/out)
+          OUTPUT=$(curl -sS -w "\n%{http_code}" -X GET "${{ secrets.API_BASE_URL }}/api/cron/daily-due" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$OUTPUT" | tail -n1)
+          BODY=$(echo "$OUTPUT" | sed '$d')
           echo "Response: $BODY"
+          echo "HTTP code: $HTTP_CODE"
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
             echo "OK ($HTTP_CODE)"
             exit 0
