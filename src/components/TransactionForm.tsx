@@ -121,7 +121,7 @@ export function TransactionForm({ type, onClose, editTransaction }: TransactionF
       />
       
       <div 
-        className="relative w-full md:max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl md:rounded-2xl p-6 pb-24 md:pb-6 animate-slide-up max-h-[85vh] overflow-y-auto overscroll-contain"
+        className="relative w-full md:max-w-md min-w-0 bg-white dark:bg-zinc-900 rounded-t-3xl md:rounded-2xl p-6 pb-24 md:pb-6 animate-slide-up max-h-[85vh] overflow-y-auto overscroll-contain"
         onTouchMove={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -137,7 +137,7 @@ export function TransactionForm({ type, onClose, editTransaction }: TransactionF
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 min-w-0">
           <div>
             <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
               Valor {paymentMode === 'installment' && '(por parcela)'}
@@ -210,7 +210,7 @@ export function TransactionForm({ type, onClose, editTransaction }: TransactionF
             </div>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
               Data {paymentMode !== 'single' && '(primeira parcela)'}
             </label>
@@ -218,7 +218,7 @@ export function TransactionForm({ type, onClose, editTransaction }: TransactionF
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-colors"
+              className="w-full min-w-0 max-w-full px-4 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-colors box-border"
               required
             />
           </div>
