@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
@@ -8,16 +8,59 @@ import { TransactionList } from '@/components/TransactionList';
 import { TransactionForm } from '@/components/TransactionForm';
 import { ViewerBanner } from '@/components/ViewerBanner';
 import { DespesasPageSkeleton } from '@/components/Skeleton';
-import { PlusIcon, CheckCircleIcon, ClockIcon, ChartBarIcon, ListBulletIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, CheckCircleIcon, ClockIcon, ChartBarIcon, ListBulletIcon, BarsArrowDownIcon } from '@heroicons/react/24/outline';
+import { Transaction } from '@/types/finance';
+
+export type ExpenseSortOption = 'date-desc' | 'date-asc' | 'paid-first' | 'pending-first';
 
 export default function DespesasPage() {
   const [showForm, setShowForm] = useState(false);
   const [viewMode, setViewMode] = useState<'dashboard' | 'list'>('dashboard');
+  const [sortBy, setSortBy] = useState<ExpenseSortOption>('date-desc');
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
   const { state, getMonthlyData, loading, isViewerMode } = useFinance();
+
+  useEffect(() => {
+    if (!sortMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
+        setSortMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [sortMenuOpen]);
   const { currentMonth, currentYear } = state;
   
   const monthlyData = getMonthlyData(currentMonth, currentYear);
   const categorySummary = getCategorySummary(monthlyData.expenses, state.categories);
+
+  const sortedExpenses = useMemo(() => {
+    const list = [...monthlyData.expenses];
+    const byDate = (a: Transaction, b: Transaction) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime();
+    const byDateAsc = (a: Transaction, b: Transaction) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime();
+    switch (sortBy) {
+      case 'date-desc':
+        return list.sort(byDate);
+      case 'date-asc':
+        return list.sort(byDateAsc);
+      case 'paid-first':
+        return list.sort((a, b) => {
+          if (a.paid !== b.paid) return a.paid ? -1 : 1;
+          return byDate(a, b);
+        });
+      case 'pending-first':
+        return list.sort((a, b) => {
+          if (a.paid !== b.paid) return b.paid ? -1 : 1;
+          return byDate(a, b);
+        });
+      default:
+        return list.sort(byDate);
+    }
+  }, [monthlyData.expenses, sortBy]);
 
   if (loading) {
     return <DespesasPageSkeleton />;
@@ -228,8 +271,72 @@ export default function DespesasPage() {
       <section className="px-6 pb-24">
         <h2 className="text-lg font-semibold mb-4">Histórico</h2>
         <TransactionList
-          transactions={monthlyData.expenses}
+          transactions={sortedExpenses}
           type="expense"
+          toolbarExtra={
+            monthlyData.expenses.length > 0 ? (
+              <div className="relative shrink-0" ref={sortMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setSortMenuOpen((open) => !open)}
+                  className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:outline-none focus:border-rose-500 dark:focus:border-rose-400 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                  aria-label="Ordenar despesas"
+                  aria-expanded={sortMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <BarsArrowDownIcon className="w-5 h-5" />
+                </button>
+                {sortMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 py-2 min-w-[200px] rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-lg z-50">
+                    <button
+                      type="button"
+                      onClick={() => { setSortBy('date-desc'); setSortMenuOpen(false); }}
+                      className={`w-full px-4 py-2.5 text-left text-sm font-medium transition-colors rounded-t-xl ${
+                        sortBy === 'date-desc'
+                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                          : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      Data (mais recente)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSortBy('date-asc'); setSortMenuOpen(false); }}
+                      className={`w-full px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+                        sortBy === 'date-asc'
+                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                          : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      Data (mais antiga)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSortBy('paid-first'); setSortMenuOpen(false); }}
+                      className={`w-full px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+                        sortBy === 'paid-first'
+                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                          : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      Pagos primeiro
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSortBy('pending-first'); setSortMenuOpen(false); }}
+                      className={`w-full px-4 py-2.5 text-left text-sm font-medium transition-colors rounded-b-xl ${
+                        sortBy === 'pending-first'
+                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                          : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      Pendentes primeiro
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : null
+          }
         />
       </section>
 

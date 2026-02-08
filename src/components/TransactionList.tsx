@@ -11,9 +11,11 @@ interface TransactionListProps {
   transactions: Transaction[];
   type: TransactionType;
   showCategory?: boolean;
+  /** Conteúdo extra na mesma linha do botão Selecionar (ex.: botão de ordenar) */
+  toolbarExtra?: React.ReactNode;
 }
 
-export function TransactionList({ transactions, type, showCategory = true }: TransactionListProps) {
+export function TransactionList({ transactions, type, showCategory = true, toolbarExtra }: TransactionListProps) {
   const { state, deleteTransaction, togglePaid, isViewerMode } = useFinance();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -123,9 +125,10 @@ export function TransactionList({ transactions, type, showCategory = true }: Tra
 
   return (
     <>
-      {/* Botão Selecionar / Sair da seleção (oculto em modo visualização) */}
+      {/* Botão Selecionar / Sair da seleção + toolbar extra (oculto em modo visualização) */}
       {!isViewerMode && (
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end items-center gap-2 mb-4">
+          {toolbarExtra}
           <button
             type="button"
             onClick={() => (selectionMode ? exitSelectionMode() : setSelectionMode(true))}
