@@ -76,7 +76,7 @@ export function usePushNotifications() {
       }
       setIsSubscribed(true);
       return true;
-    } catch (e) {
+    } catch {
       setError('Erro ao ativar notificações');
       return false;
     } finally {

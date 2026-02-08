@@ -31,7 +31,7 @@ export async function GET(request: Request) {
         date: { gte: start, lt: end },
       },
       select: { userId: true, description: true, amount: true },
-      orderBy: { userId: true },
+      orderBy: { userId: 'asc' },
     });
 
     const byUser = dueToday.reduce((acc, t) => {
