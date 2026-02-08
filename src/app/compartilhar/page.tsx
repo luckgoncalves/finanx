@@ -156,13 +156,16 @@ export default function CompartilharPage() {
           </h2>
           {!push.isSupported ? (
             <div className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
-              {push.isIOS && !push.isStandalone ? (
+              {push.isIOS ? (
                 <>
                   <p className="font-medium text-zinc-700 dark:text-zinc-300">
                     No iPhone, as notificações só funcionam com o app na Tela Inicial.
                   </p>
                   <p>
-                    Toque no ícone <strong>Compartilhar</strong> (ou “Enviar”) no Safari, depois em <strong>“Adicionar à Tela de Início”</strong>. Abra o FinanX pelo ícone na tela inicial e volte aqui para ativar as notificações.
+                    Toque no ícone <strong>Compartilhar</strong> (ou “Enviar”) no Safari, depois em <strong>“Adicionar à Tela de Início”</strong>. Abra o FinanX pelo ícone na tela inicial (não pela aba do Safari) e volte aqui.
+                  </p>
+                  <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-2">
+                    Se já estiver usando o app pela Tela Inicial, feche o app por completo e abra de novo pelo ícone.
                   </p>
                 </>
               ) : (

@@ -38,10 +38,11 @@ export function usePushNotifications() {
 
   const hasServiceWorker = isClient && 'serviceWorker' in navigator;
   const hasNotification = isClient && typeof Notification !== 'undefined';
+  const hasVapid = Boolean(VAPID_PUBLIC);
   const isSupported = isClient &&
     hasServiceWorker &&
     hasNotification &&
-    Boolean(VAPID_PUBLIC);
+    (hasVapid || isIOS);
 
   useEffect(() => {
     if (!isSupported) return;
@@ -55,8 +56,12 @@ export function usePushNotifications() {
   }, [isSupported]);
 
   const subscribe = useCallback(async (): Promise<boolean> => {
-    if (!isSupported || !VAPID_PUBLIC || !registration) {
+    if (!isSupported || !registration) {
       setError('Notificações não disponíveis');
+      return false;
+    }
+    if (!VAPID_PUBLIC) {
+      setError('App precisa ser atualizado. Feche o app por completo e abra de novo pelo ícone na Tela Inicial.');
       return false;
     }
     setLoading(true);
