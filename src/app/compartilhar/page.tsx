@@ -155,9 +155,22 @@ export default function CompartilharPage() {
             Notificações
           </h2>
           {!push.isSupported ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Notificações não estão disponíveis neste navegador. Use Chrome, Edge ou Safari no celular.
-            </p>
+            <div className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+              {push.isIOS && !push.isStandalone ? (
+                <>
+                  <p className="font-medium text-zinc-700 dark:text-zinc-300">
+                    No iPhone, as notificações só funcionam com o app na Tela Inicial.
+                  </p>
+                  <p>
+                    Toque no ícone <strong>Compartilhar</strong> (ou “Enviar”) no Safari, depois em <strong>“Adicionar à Tela de Início”</strong>. Abra o FinanX pelo ícone na tela inicial e volte aqui para ativar as notificações.
+                  </p>
+                </>
+              ) : (
+                <p>
+                  Notificações não estão disponíveis neste navegador. Use Chrome, Edge ou Safari no celular (no iPhone, adicione o app à Tela Inicial).
+                </p>
+              )}
+            </div>
           ) : (
             <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
               <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-3">

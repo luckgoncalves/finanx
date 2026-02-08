@@ -22,12 +22,23 @@ export function usePushNotifications() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isIOS =
+    typeof window !== 'undefined' &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  const isStandalone =
+    typeof window !== 'undefined' &&
+    (window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true);
+
   const isSupported =
     typeof window !== 'undefined' &&
     'serviceWorker' in navigator &&
     'PushManager' in window &&
     'Notification' in window &&
-    Boolean(VAPID_PUBLIC);
+    Boolean(VAPID_PUBLIC) &&
+    (!isIOS || isStandalone);
 
   useEffect(() => {
     if (!isSupported) return;
@@ -110,6 +121,8 @@ export function usePushNotifications() {
 
   return {
     isSupported,
+    isIOS: isIOS ?? false,
+    isStandalone: isStandalone ?? false,
     permission,
     isSubscribed,
     loading,
