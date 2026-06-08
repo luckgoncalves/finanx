@@ -10,14 +10,24 @@ const fs = require('fs');
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
 
 const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#10b981"/>
-      <stop offset="100%" style="stop-color:#059669"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
-  <text x="256" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="280" font-weight="bold" fill="white" text-anchor="middle">F</text>
+  <!-- Outer background -->
+  <rect width="512" height="512" rx="102" fill="#10b981"/>
+
+  <!-- Card body -->
+  <rect x="77" y="128" width="358" height="247" rx="30" fill="#ecfdf5"/>
+  <!-- Card header strip -->
+  <rect x="77" y="128" width="358" height="77" rx="30" fill="#d1fae5"/>
+  <!-- Card top accent -->
+  <rect x="77" y="128" width="358" height="34" rx="17" fill="#a7f3d0"/>
+
+  <!-- Chip -->
+  <rect x="316" y="222" width="153" height="102" rx="26" fill="#10b981" stroke="#ecfdf5" stroke-width="6"/>
+  <!-- Chip circle -->
+  <circle cx="392" cy="273" r="21" fill="#ecfdf5"/>
+
+  <!-- Card lines -->
+  <rect x="111" y="307" width="119" height="17" rx="8" fill="#6ee7b7"/>
+  <rect x="111" y="341" width="77" height="17" rx="8" fill="#a7f3d0"/>
 </svg>`;
 
 async function generateIcons() {

@@ -16,6 +16,7 @@ import {
   ChartBarIcon as ChartBarIconSolid,
 } from '@heroicons/react/24/solid';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { FinanXLogo } from './FinanXLogo';
 
 const navItems = [
   { href: '/', label: 'Início', icon: HomeIcon, iconActive: HomeIconSolid },
@@ -39,9 +40,7 @@ export function Navigation() {
         <div className="flex md:flex-col items-center justify-around md:justify-start md:pt-6 md:gap-2 h-16 md:h-full px-2 md:px-0">
           {/* Logo for desktop */}
           <div className="hidden md:flex items-center justify-center mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <span className="text-white font-bold text-lg">F</span>
-            </div>
+            <FinanXLogo variant="icon" size={40} />
           </div>
 
           {navItems.map((item) => {
