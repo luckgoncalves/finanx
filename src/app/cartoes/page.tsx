@@ -343,11 +343,11 @@ export default function CartoesPage() {
                 const total = getCardTotal(card.id);
 
                 return (
-                  <div key={card.id} className="relative">
+                  <div key={card.id} className="flex items-center rounded-2xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark transition-all hover:scale-[1.01] active:scale-[0.99]">
                     <button
                       type="button"
                       onClick={() => handleSelectCard(card)}
-                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark text-left transition-all hover:scale-[1.01] active:scale-[0.99]"
+                      className="flex-1 flex items-center gap-3 p-4 text-left min-w-0"
                     >
                       <div
                         className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
@@ -357,27 +357,28 @@ export default function CartoesPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold">{card.name}</p>
-                        <p className="text-sm text-zinc-400 dark:text-zinc-500">
+                        <p className="text-sm text-zinc-400 dark:text-zinc-500 truncate">
                           {[card.brand, card.lastDigits ? `•••• ${card.lastDigits}` : null]
                             .filter(Boolean)
-                            .join(' · ') || 'Cartão de crédito'}{' '}
-                          · {txCount} transaç{txCount !== 1 ? 'ões' : 'ão'}
+                            .join(' · ') || 'Cartão de crédito'}
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
+                          {txCount} transaç{txCount !== 1 ? 'ões' : 'ão'}
                         </p>
                       </div>
-                      <div className="text-right shrink-0 mr-2">
+                      <div className="text-right shrink-0 ml-2">
                         <p className="text-xs text-zinc-400">Total</p>
                         <p className="font-bold font-mono text-rose-600 dark:text-rose-400 text-sm">
                           {formatCurrency(total)}
                         </p>
                       </div>
-                      <ChevronDownIcon className="w-4 h-4 text-zinc-400 -rotate-90 shrink-0" />
+                      <ChevronDownIcon className="w-4 h-4 text-zinc-400 -rotate-90 shrink-0 ml-1" />
                     </button>
 
-                    {/* Delete button */}
                     {!isViewerMode && (
-                      <div className="absolute top-3 right-10">
+                      <div className="pr-3 flex items-center shrink-0">
                         {confirmDeleteId === card.id ? (
-                          <div className="flex items-center gap-1 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 p-1">
+                          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
                             <button
                               onClick={() => handleDelete(card.id)}
                               className="px-2 py-1 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
@@ -386,7 +387,7 @@ export default function CartoesPage() {
                             </button>
                             <button
                               onClick={() => setConfirmDeleteId(null)}
-                              className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                              className="p-1 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                             >
                               <XMarkIcon className="w-3 h-3" />
                             </button>
