@@ -1,12 +1,14 @@
 'use client';
 
 import { useFinance } from '@/context/FinanceContext';
+import { useUI } from '@/context/UIContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { ViewerBanner } from '@/components/ViewerBanner';
 import { MONTHS } from '@/types/finance';
 
 export default function RelatoriosPage() {
   const { state, getMonthlyData, getYearlyTotal } = useFinance();
+  const { hideValues } = useUI();
   const { currentYear } = state;
   
   const yearlyData = getYearlyTotal(currentYear);
@@ -76,35 +78,23 @@ export default function RelatoriosPage() {
             <div className="text-center">
               <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1">Entradas</p>
               <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                {yearlyData.totalIncome.toLocaleString('pt-BR', { 
-                  notation: 'compact',
-                  style: 'currency', 
-                  currency: 'BRL' 
-                })}
+                {hideValues ? 'R$ •••••' : yearlyData.totalIncome.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
               </p>
             </div>
             <div className="text-center">
               <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1">Despesas</p>
               <p className="text-lg font-bold text-rose-600 dark:text-rose-400 font-mono">
-                {yearlyData.totalExpense.toLocaleString('pt-BR', { 
-                  notation: 'compact',
-                  style: 'currency', 
-                  currency: 'BRL' 
-                })}
+                {hideValues ? 'R$ •••••' : yearlyData.totalExpense.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
               </p>
             </div>
             <div className="text-center">
               <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1">Saldo</p>
               <p className={`text-lg font-bold font-mono ${
-                yearlyData.balance >= 0 
-                  ? 'text-emerald-600 dark:text-emerald-400' 
+                yearlyData.balance >= 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-rose-600 dark:text-rose-400'
               }`}>
-                {yearlyData.balance.toLocaleString('pt-BR', { 
-                  notation: 'compact',
-                  style: 'currency', 
-                  currency: 'BRL' 
-                })}
+                {hideValues ? 'R$ •••••' : yearlyData.balance.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
               </p>
             </div>
           </div>
@@ -181,7 +171,7 @@ export default function RelatoriosPage() {
                     <span className="font-medium">{cat.name}</span>
                   </div>
                   <span className="font-semibold font-mono text-rose-600 dark:text-rose-400">
-                    {cat.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {hideValues ? 'R$ •••••' : cat.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </span>
                 </div>
                 <div className="relative h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">

@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline';
+import { useUI } from '@/context/UIContext';
 
 interface SummaryCardProps {
   title: string;
@@ -11,6 +12,8 @@ interface SummaryCardProps {
 }
 
 export function SummaryCard({ title, amount, type, subtitle, compact = false }: SummaryCardProps) {
+  const { hideValues } = useUI();
+
   const formatCurrency = (value: number) => {
     return Math.abs(value).toLocaleString('pt-BR', {
       style: 'currency',
@@ -55,8 +58,9 @@ export function SummaryCard({ title, amount, type, subtitle, compact = false }: 
         <div className="min-w-0 flex-1">
           <p className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-white/80`}>{title}</p>
           <p className={`${compact ? 'text-base sm:text-lg' : 'text-lg sm:text-2xl'} font-bold mt-1 font-mono`}>
-            {type === 'balance' && amount < 0 ? '-' : ''}
-            {formatCurrency(amount)}
+            {hideValues ? 'R$ •••••' : (
+              <>{type === 'balance' && amount < 0 ? '-' : ''}{formatCurrency(amount)}</>
+            )}
           </p>
           {subtitle && (
             <p className="text-xs text-white/60 mt-1">{subtitle}</p>

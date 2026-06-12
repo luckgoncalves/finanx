@@ -2,6 +2,7 @@
 
 import { useFinance } from '@/context/FinanceContext';
 import { useOnboarding } from '@/context/OnboardingContext';
+import { useUI } from '@/context/UIContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
 import { UserMenu } from '@/components/UserMenu';
@@ -9,11 +10,12 @@ import { ViewerBanner } from '@/components/ViewerBanner';
 import { DashboardSkeleton } from '@/components/Skeleton';
 import { MONTHS } from '@/types/finance';
 import Link from 'next/link';
-import { PlusIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ArrowRightIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
   const { state, getMonthlyData, getYearlyTotal, loading, isViewerMode } = useFinance();
   const { showOnboarding } = useOnboarding();
+  const { hideValues, toggleHideValues } = useUI();
   const { currentMonth, currentYear } = state;
   
   const monthlyData = getMonthlyData(currentMonth, currentYear);
@@ -40,7 +42,20 @@ export default function Home() {
               FinanX
             </h1>
           </div>
-          <UserMenu onShowOnboarding={showOnboarding} />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleHideValues}
+              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              aria-label={hideValues ? 'Mostrar valores' : 'Ocultar valores'}
+            >
+              {hideValues ? (
+                <EyeSlashIcon className="w-5 h-5" />
+              ) : (
+                <EyeIcon className="w-5 h-5" />
+              )}
+            </button>
+            <UserMenu onShowOnboarding={showOnboarding} />
+          </div>
         </div>
         
         <div className="flex justify-center mb-6">
@@ -105,19 +120,19 @@ export default function Home() {
             <div>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">Entradas</p>
               <p className="text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
-                {yearlyData.totalIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {hideValues ? 'R$ •••••' : yearlyData.totalIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
             </div>
             <div>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">Despesas</p>
               <p className="text-xs sm:text-sm font-semibold text-rose-600 dark:text-rose-400 font-mono">
-                {yearlyData.totalExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {hideValues ? 'R$ •••••' : yearlyData.totalExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
             </div>
             <div>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">Saldo</p>
               <p className={`text-xs sm:text-sm font-semibold font-mono ${yearlyData.balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                {yearlyData.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {hideValues ? 'R$ •••••' : yearlyData.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
             </div>
           </div>
@@ -171,11 +186,12 @@ export default function Home() {
                         : 'text-rose-600 dark:text-rose-400'
                     }`}
                   >
-                    {transaction.type === 'income' ? '+' : '-'}
-                    {transaction.amount.toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
+                    {hideValues ? 'R$ •••••' : (
+                      <>
+                        {transaction.type === 'income' ? '+' : '-'}
+                        {transaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </>
+                    )}
                   </span>
                 </div>
               );

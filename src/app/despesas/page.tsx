@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFinance } from '@/context/FinanceContext';
+import { useUI } from '@/context/UIContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
 import { TransactionList } from '@/components/TransactionList';
@@ -30,6 +31,7 @@ export default function DespesasPage() {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const sortMenuRef = useRef<HTMLDivElement>(null);
   const { state, getMonthlyData, loading, isViewerMode, togglePaid, refreshData } = useFinance();
+  const { hideValues } = useUI();
   const [overdueExpanded, setOverdueExpanded] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [togglingInvoice, setTogglingInvoice] = useState<string | null>(null);
@@ -239,7 +241,7 @@ export default function DespesasPage() {
                 <span className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400">Pagas</span>
               </div>
               <p className="text-sm sm:text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
-                {monthlyData.totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {hideValues ? 'R$ •••••' : monthlyData.totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">
                 {monthlyData.expenses.filter((e) => e.paid).length} de {monthlyData.expenses.length}
@@ -251,7 +253,7 @@ export default function DespesasPage() {
                 <span className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400">Pendentes</span>
               </div>
               <p className="text-sm sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
-                {monthlyData.totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {hideValues ? 'R$ •••••' : monthlyData.totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
               <p className="text-xs text-zinc-400 dark:text-zinc-500">
                 {monthlyData.expenses.filter((e) => !e.paid).length} de {monthlyData.expenses.length}
@@ -276,7 +278,7 @@ export default function DespesasPage() {
                   {overduePending.length + overdueCardGroups.length} pendência{(overduePending.length + overdueCardGroups.length) !== 1 ? 's' : ''} de meses anteriores
                 </p>
                 <p className="text-xs text-amber-600 dark:text-amber-400 font-mono">
-                  {overdueTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {hideValues ? 'R$ •••••' : overdueTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
               </div>
             </div>
@@ -321,7 +323,7 @@ export default function DespesasPage() {
                       </div>
                     </div>
                     <p className="text-sm font-mono font-semibold text-rose-600 dark:text-rose-400 shrink-0">
-                      {t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {hideValues ? 'R$ •••••' : t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </p>
                   </div>
                 );
@@ -371,7 +373,7 @@ export default function DespesasPage() {
                         </span>
                       </div>
                       <p className="text-sm font-mono font-semibold text-rose-600 dark:text-rose-400 shrink-0">
-                        {g.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {hideValues ? 'R$ •••••' : g.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </p>
                       <ChevronRightIcon className="w-4 h-4 text-zinc-400 shrink-0" />
                     </button>
