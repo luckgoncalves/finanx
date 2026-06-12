@@ -1,15 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { useUI } from '@/context/UIContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { ViewerBanner } from '@/components/ViewerBanner';
 import { MONTHS } from '@/types/finance';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
 export default function RelatoriosPage() {
   const { state, getMonthlyData, getYearlyTotal } = useFinance();
   const { hideValues } = useUI();
   const { currentMonth, currentYear } = state;
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const monthlyData = getMonthlyData(currentMonth, currentYear);
   const yearlyData = getYearlyTotal(currentYear);
@@ -198,37 +201,85 @@ export default function RelatoriosPage() {
             Despesas por Categoria · {MONTHS[currentMonth - 1]}
           </h2>
           <div className="space-y-3">
-            {categoryBreakdown.map((cat) => (
-              <div
-                key={cat.id}
-                className="p-4 rounded-xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: cat.color }}
-                    />
-                    <span className="font-medium">{cat.name}</span>
-                  </div>
-                  <span className="font-semibold font-mono text-rose-600 dark:text-rose-400">
-                    {hideValues ? 'R$ •••••' : cat.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </span>
+            {categoryBreakdown.map((cat) => {
+              const isOpen = expandedCategory === cat.id;
+              const catTransactions = monthTransactions
+                .filter((t) => t.type === 'expense' && t.category === cat.id)
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+              return (
+                <div
+                  key={cat.id}
+                  className="rounded-xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark overflow-hidden"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedCategory(isOpen ? null : cat.id)}
+                    className="w-full p-4 text-left"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className="w-4 h-4 rounded-full shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        <span className="font-medium truncate">{cat.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-2">
+                        <span className="font-semibold font-mono text-rose-600 dark:text-rose-400 text-sm">
+                          {hideValues ? 'R$ •••••' : cat.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </span>
+                        <ChevronDownIcon
+                          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                        />
+                      </div>
+                    </div>
+                    <div className="relative h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        className="absolute left-0 top-0 h-full rounded-full transition-all"
+                        style={{ width: `${cat.percentage}%`, backgroundColor: cat.color }}
+                      />
+                    </div>
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 text-right">
+                      {catTransactions.length} transaç{catTransactions.length !== 1 ? 'ões' : 'ão'} · {cat.percentage.toFixed(1)}%
+                    </p>
+                  </button>
+
+                  {isOpen && (
+                    <div className="border-t border-zinc-100 dark:border-zinc-800">
+                      {catTransactions.map((t, i) => (
+                        <div
+                          key={t.id}
+                          className={`flex items-center justify-between px-4 py-3 gap-3 ${
+                            i < catTransactions.length - 1
+                              ? 'border-b border-zinc-100 dark:border-zinc-800'
+                              : ''
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{t.description}</p>
+                            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                              {new Date(t.date + 'T00:00:00').toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: 'short',
+                              })}
+                              {t.installmentNumber && t.totalInstallments
+                                ? ` · ${t.installmentNumber}/${t.totalInstallments}x`
+                                : ''}
+                            </p>
+                          </div>
+                          <span className="text-sm font-mono font-semibold text-rose-600 dark:text-rose-400 shrink-0">
+                            {hideValues
+                              ? 'R$ •••••'
+                              : t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="relative h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className="absolute left-0 top-0 h-full rounded-full transition-all"
-                    style={{ 
-                      width: `${cat.percentage}%`,
-                      backgroundColor: cat.color,
-                    }}
-                  />
-                </div>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 text-right">
-                  {cat.percentage.toFixed(1)}%
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
