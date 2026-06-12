@@ -20,6 +20,9 @@ function formatTransaction(t: {
   totalInstallments: number | null;
   isRecurring: boolean;
   recurringGroupId: string | null;
+  importSource: string | null;
+  creditCardId: string | null;
+  purchaseDate: Date | null;
   createdAt: Date;
 }) {
   return {
@@ -38,6 +41,9 @@ function formatTransaction(t: {
     totalInstallments: t.totalInstallments,
     isRecurring: t.isRecurring,
     recurringGroupId: t.recurringGroupId,
+    importSource: t.importSource,
+    creditCardId: t.creditCardId,
+    purchaseDate: t.purchaseDate ? t.purchaseDate.toISOString().split('T')[0] : null,
     createdAt: t.createdAt.toISOString(),
   };
 }

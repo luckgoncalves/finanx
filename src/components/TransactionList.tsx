@@ -192,6 +192,14 @@ export function TransactionList({ transactions, type, showCategory = true, toolb
                 Recorrente
               </span>
             )}
+            {transaction.importSource && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 mt-1">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                {transaction.importSource.toUpperCase()}
+              </span>
+            )}
             <p
               className={`font-semibold font-mono mt-1 ${
                 type === 'income'
@@ -218,6 +226,11 @@ export function TransactionList({ transactions, type, showCategory = true, toolb
               {!groupByDate && (
                 <span className="text-sm text-zinc-400 dark:text-zinc-500">
                   {formatDate(transaction.date)}
+                </span>
+              )}
+              {transaction.purchaseDate && transaction.purchaseDate !== transaction.date && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
+                  Compra: {formatDate(transaction.purchaseDate)}
                 </span>
               )}
               {isPaid && (

@@ -1,5 +1,15 @@
 export type TransactionType = 'income' | 'expense';
 
+export interface CreditCard {
+  id: string;
+  name: string;
+  lastDigits?: string | null;
+  brand?: string | null;
+  color: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface Transaction {
   id: string;
   description: string;
@@ -18,6 +28,10 @@ export interface Transaction {
   // Recorrência
   isRecurring: boolean;
   recurringGroupId?: string | null;
+  // Importação
+  importSource?: string | null;
+  creditCardId?: string | null;
+  purchaseDate?: string | null; // data da compra (pode diferir da data da fatura)
   createdAt: string;
 }
 

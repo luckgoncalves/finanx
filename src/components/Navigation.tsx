@@ -8,12 +8,14 @@ import {
   ArrowTrendingDownIcon,
   ChartBarIcon,
   ArrowDownTrayIcon,
+  CreditCardIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
   ArrowTrendingUpIcon as ArrowTrendingUpIconSolid,
   ArrowTrendingDownIcon as ArrowTrendingDownIconSolid,
   ChartBarIcon as ChartBarIconSolid,
+  CreditCardIcon as CreditCardIconSolid,
 } from '@heroicons/react/24/solid';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { FinanXLogo } from './FinanXLogo';
@@ -22,6 +24,7 @@ const navItems = [
   { href: '/', label: 'Início', icon: HomeIcon, iconActive: HomeIconSolid },
   { href: '/entradas', label: 'Entradas', icon: ArrowTrendingUpIcon, iconActive: ArrowTrendingUpIconSolid },
   { href: '/despesas', label: 'Despesas', icon: ArrowTrendingDownIcon, iconActive: ArrowTrendingDownIconSolid },
+  { href: '/cartoes', label: 'Cartões', icon: CreditCardIcon, iconActive: CreditCardIconSolid },
   { href: '/relatorios', label: 'Relatórios', icon: ChartBarIcon, iconActive: ChartBarIconSolid },
 ];
 

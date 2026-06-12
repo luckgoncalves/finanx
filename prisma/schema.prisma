@@ -17,6 +17,7 @@ model User {
   updatedAt           DateTime            @updatedAt @map("updated_at")
   transactions        Transaction[]
   categories          Category[]
+  creditCards         CreditCard[]
   sharedAsOwner       AccountShare[]      @relation("ShareOwner")
   sharedAsViewer      AccountShare[]      @relation("ShareViewer")
   pushSubscriptions   PushSubscription[]
@@ -58,6 +59,23 @@ model AccountShare {
   @@map("account_shares")
 }
 
+model CreditCard {
+  id           String        @id @default(uuid())
+  userId       String        @map("user_id")
+  name         String
+  lastDigits   String?       @map("last_digits")
+  brand        String?
+  color        String        @default("#6366f1")
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("credit_cards")
+}
+
 model Transaction {
   id          String   @id @default(uuid())
   userId      String   @map("user_id")
@@ -70,23 +88,28 @@ model Transaction {
   year        Int
   paid        Boolean  @default(false)
   paidAt      DateTime? @map("paid_at")
-  
+
   // Campos para parcelamento e recorrência
   isInstallment      Boolean  @default(false) @map("is_installment")
   installmentNumber  Int?     @map("installment_number")
   totalInstallments  Int?     @map("total_installments")
   isRecurring        Boolean  @default(false) @map("is_recurring")
   recurringGroupId   String?  @map("recurring_group_id")
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  importSource       String?  @map("import_source") // 'ofx' | 'csv' | null (manual)
+  creditCardId       String?  @map("credit_card_id")
+  purchaseDate       DateTime? @db.Date @map("purchase_date") // data da compra (pode diferir da data da fatura)
+
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCard  CreditCard? @relation(fields: [creditCardId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([year, month])
   @@index([type])
   @@index([paid])
   @@index([recurringGroupId])
+  @@index([creditCardId])
   @@map("transactions")
 }
 
