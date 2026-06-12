@@ -9,9 +9,17 @@ import { MONTHS } from '@/types/finance';
 export default function RelatoriosPage() {
   const { state, getMonthlyData, getYearlyTotal } = useFinance();
   const { hideValues } = useUI();
-  const { currentYear } = state;
-  
+  const { currentMonth, currentYear } = state;
+
+  const monthlyData = getMonthlyData(currentMonth, currentYear);
   const yearlyData = getYearlyTotal(currentYear);
+
+  const incomePercent = yearlyData.totalIncome > 0
+    ? (monthlyData.totalIncome / yearlyData.totalIncome) * 100
+    : 0;
+  const expensePercent = yearlyData.totalExpense > 0
+    ? (monthlyData.totalExpense / yearlyData.totalExpense) * 100
+    : 0;
 
   // Calculate monthly data for chart
   const monthlyStats = MONTHS.map((_, index) => {
@@ -31,9 +39,12 @@ export default function RelatoriosPage() {
     1
   );
 
-  // Calculate category breakdown for the year
-  const yearTransactions = state.transactions.filter((t) => t.year === currentYear);
-  const expensesByCategory = yearTransactions
+  // Category breakdown for selected month
+  const monthTransactions = state.transactions.filter(
+    (t) => t.month === currentMonth && t.year === currentYear
+  );
+
+  const expensesByCategory = monthTransactions
     .filter((t) => t.type === 'expense')
     .reduce((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + t.amount;
@@ -48,8 +59,8 @@ export default function RelatoriosPage() {
         name: category?.name || 'Outros',
         color: category?.color || '#64748b',
         total,
-        percentage: yearlyData.totalExpense > 0 
-          ? (total / yearlyData.totalExpense) * 100 
+        percentage: monthlyData.totalExpense > 0
+          ? (total / monthlyData.totalExpense) * 100
           : 0,
       };
     })
@@ -69,33 +80,50 @@ export default function RelatoriosPage() {
         </div>
       </header>
 
-      {/* Year Overview */}
+      {/* Month Overview */}
       <section className="px-6 mb-6">
         <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark">
-          <h2 className="text-lg font-semibold mb-4">Resumo {currentYear}</h2>
-          
+          <h2 className="text-lg font-semibold mb-4">
+            {MONTHS[currentMonth - 1]} {currentYear}
+          </h2>
+
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
               <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1">Entradas</p>
               <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                {hideValues ? 'R$ •••••' : yearlyData.totalIncome.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
+                {hideValues ? 'R$ •••••' : monthlyData.totalIncome.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
               </p>
+              {!hideValues && yearlyData.totalIncome > 0 && (
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                  {incomePercent.toFixed(0)}% do ano
+                </p>
+              )}
             </div>
             <div className="text-center">
               <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1">Despesas</p>
               <p className="text-lg font-bold text-rose-600 dark:text-rose-400 font-mono">
-                {hideValues ? 'R$ •••••' : yearlyData.totalExpense.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
+                {hideValues ? 'R$ •••••' : monthlyData.totalExpense.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
               </p>
+              {!hideValues && yearlyData.totalExpense > 0 && (
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                  {expensePercent.toFixed(0)}% do ano
+                </p>
+              )}
             </div>
             <div className="text-center">
               <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1">Saldo</p>
               <p className={`text-lg font-bold font-mono ${
-                yearlyData.balance >= 0
+                monthlyData.balance >= 0
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-rose-600 dark:text-rose-400'
               }`}>
-                {hideValues ? 'R$ •••••' : yearlyData.balance.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
+                {hideValues ? 'R$ •••••' : monthlyData.balance.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
               </p>
+              {!hideValues && (
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                  ano: {yearlyData.balance.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
+                </p>
+              )}
             </div>
           </div>
 
@@ -155,7 +183,9 @@ export default function RelatoriosPage() {
       {/* Category Breakdown */}
       {categoryBreakdown.length > 0 && (
         <section className="px-6 pb-24">
-          <h2 className="text-lg font-semibold mb-4">Despesas por Categoria</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            Despesas por Categoria · {MONTHS[currentMonth - 1]}
+          </h2>
           <div className="space-y-3">
             {categoryBreakdown.map((cat) => (
               <div
@@ -193,7 +223,7 @@ export default function RelatoriosPage() {
       )}
 
       {/* Empty State */}
-      {yearTransactions.length === 0 && (
+      {monthTransactions.length === 0 && categoryBreakdown.length === 0 && (
         <section className="px-6 pb-24">
           <div className="text-center py-12 rounded-2xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
