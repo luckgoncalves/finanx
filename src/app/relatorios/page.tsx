@@ -87,43 +87,54 @@ export default function RelatoriosPage() {
             {MONTHS[currentMonth - 1]} {currentYear}
           </h2>
 
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="text-center">
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1">Entradas</p>
-              <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                {hideValues ? 'R$ •••••' : monthlyData.totalIncome.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
-              </p>
-              {!hideValues && yearlyData.totalIncome > 0 && (
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
-                  {incomePercent.toFixed(0)}% do ano
+          <div className="space-y-3 mb-6">
+            {/* Entradas */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-zinc-400 dark:text-zinc-500">Entradas</p>
+              <div className="text-right">
+                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                  {hideValues ? 'R$ •••••' : monthlyData.totalIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
-              )}
+                {!hideValues && yearlyData.totalIncome > 0 && (
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                    {incomePercent.toFixed(0)}% do total anual
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1">Despesas</p>
-              <p className="text-lg font-bold text-rose-600 dark:text-rose-400 font-mono">
-                {hideValues ? 'R$ •••••' : monthlyData.totalExpense.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
-              </p>
-              {!hideValues && yearlyData.totalExpense > 0 && (
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
-                  {expensePercent.toFixed(0)}% do ano
+            <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
+            {/* Despesas */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-zinc-400 dark:text-zinc-500">Despesas</p>
+              <div className="text-right">
+                <p className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono">
+                  {hideValues ? 'R$ •••••' : monthlyData.totalExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
-              )}
+                {!hideValues && yearlyData.totalExpense > 0 && (
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                    {expensePercent.toFixed(0)}% do total anual
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1">Saldo</p>
-              <p className={`text-lg font-bold font-mono ${
-                monthlyData.balance >= 0
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-rose-600 dark:text-rose-400'
-              }`}>
-                {hideValues ? 'R$ •••••' : monthlyData.balance.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
-              </p>
-              {!hideValues && (
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
-                  ano: {yearlyData.balance.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
+            <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
+            {/* Saldo */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-zinc-400 dark:text-zinc-500">Saldo do mês</p>
+              <div className="text-right">
+                <p className={`text-sm font-bold font-mono ${
+                  monthlyData.balance >= 0
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-rose-600 dark:text-rose-400'
+                }`}>
+                  {hideValues ? 'R$ •••••' : monthlyData.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
-              )}
+                {!hideValues && (
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                    acumulado {currentYear}: {yearlyData.balance.toLocaleString('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' })}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
