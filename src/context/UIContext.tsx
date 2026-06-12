@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface UIContextType {
   hideValues: boolean;
@@ -10,14 +10,11 @@ interface UIContextType {
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export function UIProvider({ children }: { children: ReactNode }) {
-  const [hideValues, setHideValues] = useState(true);
-
-  useEffect(() => {
+  const [hideValues, setHideValues] = useState(() => {
+    if (typeof window === 'undefined') return true;
     const stored = localStorage.getItem('finanx-hide-values');
-    if (stored !== null) {
-      setHideValues(stored === 'true');
-    }
-  }, []);
+    return stored === null ? true : stored === 'true';
+  });
 
   const toggleHideValues = () => {
     setHideValues((prev) => {
