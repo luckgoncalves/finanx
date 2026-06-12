@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { TrashIcon, PencilIcon, CheckCircleIcon, Squares2X2Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
 import { useFinance } from '@/context/FinanceContext';
+import { useUI } from '@/context/UIContext';
 import { Transaction, TransactionType } from '@/types/finance';
 import { TransactionForm } from './TransactionForm';
 
@@ -19,6 +20,7 @@ interface TransactionListProps {
 
 export function TransactionList({ transactions, type, showCategory = true, toolbarExtra, groupByDate = true }: TransactionListProps) {
   const { state, deleteTransaction, togglePaid, isViewerMode } = useFinance();
+  const { hideValues } = useUI();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -209,7 +211,7 @@ export function TransactionList({ transactions, type, showCategory = true, toolb
                     : 'text-rose-600 dark:text-rose-400'
               }`}
             >
-              {type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
+              {hideValues ? 'R$ •••••' : `${type === 'income' ? '+' : '-'} ${formatCurrency(transaction.amount)}`}
             </p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               {showCategory && category && (
@@ -332,7 +334,7 @@ export function TransactionList({ transactions, type, showCategory = true, toolb
                   : 'text-rose-600 dark:text-rose-400'
               }`}
             >
-              {type === 'income' ? '+' : '-'} {formatCurrency(selectedSum)}
+              {hideValues ? 'R$ •••••' : `${type === 'income' ? '+' : '-'} ${formatCurrency(selectedSum)}`}
             </p>
           </div>
           <button

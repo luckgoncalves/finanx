@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { CreditCardIcon as CreditCardSolid } from '@heroicons/react/24/solid';
 import { useFinance } from '@/context/FinanceContext';
+import { useUI } from '@/context/UIContext';
 import { CreditCard } from '@/types/finance';
 import { Transaction } from '@/types/finance';
 import { TransactionList } from '@/components/TransactionList';
@@ -26,6 +27,7 @@ const CARD_COLORS = [
 
 export default function CartoesPage() {
   const { state, isViewerMode, refreshData } = useFinance();
+  const { hideValues } = useUI();
   const [cards, setCards] = useState<CreditCard[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -192,7 +194,7 @@ export default function CartoesPage() {
               <div className="text-right shrink-0">
                 <p className="text-xs text-zinc-400">Total gasto</p>
                 <p className="font-bold font-mono text-rose-600 dark:text-rose-400">
-                  {formatCurrency(getCardTotal(selectedCard.id))}
+                  {hideValues ? 'R$ •••••' : formatCurrency(getCardTotal(selectedCard.id))}
                 </p>
               </div>
             </div>
@@ -296,7 +298,7 @@ export default function CartoesPage() {
                             {label}
                           </h3>
                           <span className="text-sm font-mono font-semibold text-rose-600 dark:text-rose-400">
-                            {formatCurrency(total)}
+                            {hideValues ? 'R$ •••••' : formatCurrency(total)}
                           </span>
                         </div>
                         <TransactionList
@@ -369,7 +371,7 @@ export default function CartoesPage() {
                       <div className="text-right shrink-0 ml-2">
                         <p className="text-xs text-zinc-400">Total</p>
                         <p className="font-bold font-mono text-rose-600 dark:text-rose-400 text-sm">
-                          {formatCurrency(total)}
+                          {hideValues ? 'R$ •••••' : formatCurrency(total)}
                         </p>
                       </div>
                       <ChevronDownIcon className="w-4 h-4 text-zinc-400 -rotate-90 shrink-0 ml-1" />
