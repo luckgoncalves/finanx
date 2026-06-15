@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -31,42 +32,91 @@ const navItems = [
 export function Navigation() {
   const pathname = usePathname();
   const { isInstallable, isInstalled, install } = usePWAInstall();
+  const [collapsed, setCollapsed] = useState(false);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (ticking.current) return;
+      ticking.current = true;
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        if (currentY > lastScrollY.current + 8 && currentY > 60) {
+          setCollapsed(true);
+        } else if (currentY < lastScrollY.current - 8 || currentY < 60) {
+          setCollapsed(false);
+        }
+        lastScrollY.current = currentY;
+        ticking.current = false;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setCollapsed(false);
+    lastScrollY.current = 0;
+  }, [pathname]);
 
   if (pathname === '/login') return null;
 
   return (
     <>
-      {/* ── Mobile: floating liquid-glass pill ── */}
-      <nav className="md:hidden fixed bottom-5 left-0 right-0 flex justify-center px-4 z-50">
-        <div className="flex items-center gap-1 px-2 py-2 rounded-full
-                        bg-zinc-900/75 dark:bg-black/70
-                        backdrop-blur-2xl
-                        border border-white/10
-                        shadow-2xl shadow-black/40">
+      {/* ── Mobile: liquid glass floating pill ── */}
+      <nav className="md:hidden fixed bottom-5 left-0 right-0 flex justify-center px-4 z-50 pointer-events-none">
+        <div
+          className={`
+            flex items-center pointer-events-auto rounded-full
+            border border-white/[0.08]
+            shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]
+            transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+            ${collapsed
+              ? 'gap-0 px-1.5 py-1.5 bg-black/60'
+              : 'gap-1 px-2 py-2 bg-zinc-900/65'
+            }
+          `}
+          style={{
+            WebkitBackdropFilter: collapsed ? 'blur(40px) saturate(180%)' : 'blur(24px) saturate(160%)',
+            backdropFilter: collapsed ? 'blur(40px) saturate(180%)' : 'blur(24px) saturate(160%)',
+          }}
+        >
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = isActive ? item.iconActive : item.icon;
-
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full transition-all duration-200 active:scale-90"
+                className={`
+                  flex flex-col items-center justify-center rounded-full active:scale-90
+                  transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                  ${collapsed ? 'px-2.5 py-1.5' : 'px-3 py-1.5'}
+                `}
               >
-                <div className={`p-2 rounded-full transition-all duration-200 ${
-                  isActive
-                    ? 'bg-emerald-500/20'
+                <div className={`
+                  flex items-center justify-center rounded-full
+                  transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                  ${collapsed ? 'p-1.5' : 'p-2'}
+                  ${isActive
+                    ? 'bg-emerald-500/20 shadow-[0_0_12px_rgba(52,211,153,0.15)]'
                     : 'hover:bg-white/5'
-                }`}>
-                  <Icon className={`w-5 h-5 transition-colors duration-200 ${
-                    isActive
-                      ? 'text-emerald-400'
-                      : 'text-zinc-400'
-                  }`} />
+                  }
+                `}>
+                  <Icon className={`
+                    transition-all duration-500
+                    ${collapsed ? 'w-4 h-4' : 'w-5 h-5'}
+                    ${isActive ? 'text-emerald-400' : 'text-zinc-400'}
+                  `} />
                 </div>
-                <span className={`text-[9px] font-medium transition-colors duration-200 ${
-                  isActive ? 'text-emerald-400' : 'text-zinc-500'
-                }`}>
+                <span className={`
+                  text-[9px] font-medium overflow-hidden whitespace-nowrap
+                  transition-all duration-300
+                  ${isActive ? 'text-emerald-400' : 'text-zinc-500'}
+                  ${collapsed ? 'max-h-0 opacity-0 mt-0' : 'max-h-4 opacity-100 mt-0.5'}
+                `}>
                   {item.label}
                 </span>
               </Link>
@@ -76,12 +126,21 @@ export function Navigation() {
           {isInstallable && !isInstalled && (
             <button
               onClick={install}
-              className="flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full transition-all duration-200 active:scale-90"
+              className={`
+                flex flex-col items-center justify-center rounded-full active:scale-90
+                transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                ${collapsed ? 'px-2.5 py-1.5' : 'px-3 py-1.5'}
+              `}
             >
-              <div className="p-2 rounded-full bg-purple-500/20">
-                <ArrowDownTrayIcon className="w-5 h-5 text-purple-400" />
+              <div className={`
+                flex items-center justify-center rounded-full bg-purple-500/20
+                transition-all duration-500 ${collapsed ? 'p-1.5' : 'p-2'}
+              `}>
+                <ArrowDownTrayIcon className={`text-purple-400 transition-all duration-500 ${collapsed ? 'w-4 h-4' : 'w-5 h-5'}`} />
               </div>
-              <span className="text-[9px] font-medium text-purple-400">Instalar</span>
+              <span className={`text-[9px] font-medium text-purple-400 overflow-hidden whitespace-nowrap transition-all duration-300 ${collapsed ? 'max-h-0 opacity-0 mt-0' : 'max-h-4 opacity-100 mt-0.5'}`}>
+                Instalar
+              </span>
             </button>
           )}
         </div>
@@ -98,7 +157,6 @@ export function Navigation() {
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = isActive ? item.iconActive : item.icon;
-
               return (
                 <Link
                   key={item.href}
@@ -124,7 +182,6 @@ export function Navigation() {
                       <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                     )}
                   </div>
-
                   <div className="absolute left-full ml-2 px-2 py-1 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
                     {item.label}
                   </div>
@@ -137,7 +194,7 @@ export function Navigation() {
                 onClick={install}
                 className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all duration-200 w-14 h-14 group relative text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300 mt-auto mb-6"
               >
-                <div className="relative p-2 rounded-xl transition-all duration-200 bg-purple-500/10 dark:bg-purple-400/10 group-hover:bg-purple-500/20 dark:group-hover:bg-purple-400/20">
+                <div className="relative p-2 rounded-xl bg-purple-500/10 dark:bg-purple-400/10 group-hover:bg-purple-500/20 dark:group-hover:bg-purple-400/20">
                   <ArrowDownTrayIcon className="w-6 h-6" />
                 </div>
                 <div className="absolute left-full ml-2 px-2 py-1 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
