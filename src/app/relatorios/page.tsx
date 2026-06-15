@@ -8,6 +8,16 @@ import { ViewerBanner } from '@/components/ViewerBanner';
 import { MONTHS } from '@/types/finance';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
+type InstallmentGroup = {
+  description: string;
+  remaining: number;
+  totalInstallments: number;
+  totalAmount: number;
+  amountPerInstallment: number;
+  nextDate: string;
+  category: string;
+};
+
 export default function RelatoriosPage() {
   const { state, getMonthlyData, getYearlyTotal } = useFinance();
   const { hideValues } = useUI();
@@ -68,6 +78,36 @@ export default function RelatoriosPage() {
       };
     })
     .sort((a, b) => b.total - a.total);
+
+  // Open installments across all time
+  const openInstallmentTxns = state.transactions.filter(
+    (t) => t.isInstallment && !t.paid && t.type === 'expense'
+  );
+
+  const installmentGroupsMap = openInstallmentTxns.reduce((acc, t) => {
+    const key = t.recurringGroupId || t.description;
+    const cleanDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
+    if (!acc[key]) {
+      acc[key] = {
+        description: cleanDesc,
+        remaining: 0,
+        totalInstallments: t.totalInstallments || 0,
+        totalAmount: 0,
+        amountPerInstallment: t.amount,
+        nextDate: t.date,
+        category: t.category,
+      };
+    }
+    acc[key].remaining += 1;
+    acc[key].totalAmount += t.amount;
+    if (new Date(t.date) < new Date(acc[key].nextDate)) {
+      acc[key].nextDate = t.date;
+    }
+    return acc;
+  }, {} as Record<string, InstallmentGroup>);
+
+  const installmentGroups = Object.values(installmentGroupsMap)
+    .sort((a, b) => b.totalAmount - a.totalAmount);
 
   return (
     <div className="min-h-screen">
@@ -193,6 +233,79 @@ export default function RelatoriosPage() {
           </div>
         </div>
       </section>
+
+      {/* Open Installments */}
+      {installmentGroups.length > 0 && (
+        <section className="px-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Parcelas em Aberto</h2>
+            {!hideValues && (
+              <span className="text-sm font-mono font-semibold text-rose-600 dark:text-rose-400">
+                {installmentGroups
+                  .reduce((s, g) => s + g.totalAmount, 0)
+                  .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </span>
+            )}
+          </div>
+          <div className="space-y-3">
+            {installmentGroups.map((group, idx) => {
+              const cat = state.categories.find((c) => c.id === group.category);
+              const nextDate = new Date(group.nextDate + 'T00:00:00').toLocaleDateString('pt-BR', {
+                day: '2-digit', month: 'short', year: 'numeric',
+              });
+              const paidCount = group.totalInstallments - group.remaining;
+              return (
+                <div
+                  key={idx}
+                  className="p-4 rounded-xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {cat && (
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                      )}
+                      <p className="font-medium truncate">{group.description}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-semibold font-mono text-rose-600 dark:text-rose-400 text-sm">
+                        {hideValues
+                          ? 'R$ •••••'
+                          : group.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                        {hideValues
+                          ? '••••/parcela'
+                          : `${group.amountPerInstallment.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/parcela`}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Progress bar */}
+                  {group.totalInstallments > 0 && (
+                    <div className="mb-2">
+                      <div className="relative h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                          className="absolute left-0 top-0 h-full bg-rose-400 rounded-full"
+                          style={{ width: `${(paidCount / group.totalInstallments) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-xs text-zinc-400 dark:text-zinc-500">
+                    <span>
+                      {group.remaining} parcela{group.remaining !== 1 ? 's' : ''} restante{group.remaining !== 1 ? 's' : ''}
+                      {group.totalInstallments > 0 ? ` de ${group.totalInstallments}` : ''}
+                    </span>
+                    <span>próxima: {nextDate}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Category Breakdown */}
       {categoryBreakdown.length > 0 && (
