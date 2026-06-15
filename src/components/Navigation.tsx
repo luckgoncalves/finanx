@@ -57,8 +57,11 @@ export function Navigation() {
   }, []);
 
   useEffect(() => {
-    setCollapsed(false);
-    lastScrollY.current = 0;
+    const t = setTimeout(() => {
+      setCollapsed(false);
+      lastScrollY.current = 0;
+    }, 0);
+    return () => clearTimeout(t);
   }, [pathname]);
 
   if (pathname === '/login') return null;
