@@ -90,7 +90,7 @@ export function UserMenu({ onShowOnboarding }: UserMenuProps) {
         <button
           onClick={() => {
             disableDemoMode();
-            router.push('/login');
+            window.location.href = '/login';
           }}
           className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-xs"
           aria-label="Sair do demo"

@@ -164,7 +164,7 @@ function LoginForm() {
           <button
             onClick={() => {
               enableDemoMode();
-              router.push('/');
+              window.location.href = '/';
             }}
             className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-purple-500/10 to-indigo-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:from-purple-500/20 hover:to-indigo-500/20 transition-all"
           >
