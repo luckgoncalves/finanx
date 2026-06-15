@@ -58,7 +58,7 @@ export default function RootLayout({
         className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans antialiased min-h-screen`}
       >
         <Providers>
-          <div className="flex flex-col min-h-screen pb-20 md:pb-0 md:pl-20">
+          <div className="flex flex-col min-h-screen pb-28 md:pb-0 md:pl-20">
             <main className="flex-1">
               {children}
             </main>
