@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { isDemoMode, disableDemoMode } from '@/lib/demo';
+import { DEMO_USER } from '@/data/demoData';
 
 interface User {
   id: string;
@@ -28,6 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   console.log('[Auth] Database configured:', isDatabaseConfigured);
 
   useEffect(() => {
+    if (isDemoMode()) {
+      setUser(DEMO_USER);
+      setLoading(false);
+      return;
+    }
     if (isDatabaseConfigured) {
       checkUser();
     } else {
@@ -90,6 +97,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    if (isDemoMode()) {
+      disableDemoMode();
+      setUser(null);
+      return;
+    }
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);

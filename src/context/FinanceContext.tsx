@@ -4,6 +4,8 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode, use
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { useShare } from './ShareContext';
+import { isDemoMode } from '@/lib/demo';
+import { DEMO_TRANSACTIONS } from '@/data/demoData';
 import {
   Transaction,
   Category,
@@ -132,6 +134,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const loadData = useCallback(async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
 
+    if (isDemoMode()) {
+      dispatch({ type: 'SET_TRANSACTIONS', payload: DEMO_TRANSACTIONS });
+      const now = new Date();
+      dispatch({ type: 'SET_MONTH', payload: { month: now.getMonth() + 1, year: now.getFullYear() } });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return;
+    }
+
     if (isDatabaseConfigured && user) {
       try {
         const url = viewAsOwnerId
@@ -183,11 +193,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   // Save to localStorage when state changes (fallback)
   useEffect(() => {
-    if (!isDatabaseConfigured || !user) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { loading: _unused, ...stateToSave } = state;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-    }
+    if (isDemoMode() || isDatabaseConfigured) return; // skip in demo mode and when using API
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { loading: _unused, ...stateToSave } = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
   }, [state, user, isDatabaseConfigured]);
 
   const isViewerMode = viewAsOwnerId != null;

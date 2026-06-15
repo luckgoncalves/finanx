@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useShare } from '@/context/ShareContext';
 import { useFinance } from '@/context/FinanceContext';
+import { isDemoMode, disableDemoMode } from '@/lib/demo';
 import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
@@ -15,6 +16,7 @@ import {
   ShareIcon,
   UserGroupIcon,
   CheckIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 
 interface UserMenuProps {
@@ -38,6 +40,8 @@ export function UserMenu({ onShowOnboarding }: UserMenuProps) {
 
   // Check if database is configured
   const isDatabaseConfigured = !!process.env.NEXT_PUBLIC_DATABASE_ENABLED;
+
+  const isDemo = isDemoMode();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -73,6 +77,27 @@ export function UserMenu({ onShowOnboarding }: UserMenuProps) {
   if (loading) {
     return (
       <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+    );
+  }
+
+  if (isDemo) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+          <SparklesIcon className="w-4 h-4" />
+          Demo
+        </span>
+        <button
+          onClick={() => {
+            disableDemoMode();
+            router.push('/login');
+          }}
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-xs"
+          aria-label="Sair do demo"
+        >
+          Sair
+        </button>
+      </div>
     );
   }
 

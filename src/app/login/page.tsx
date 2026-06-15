@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon, UserIcon } from '@heroicons/react/24/outline';
 import { FinanXLogo } from '@/components/FinanXLogo';
+import { enableDemoMode } from '@/lib/demo';
 
 function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -158,15 +159,26 @@ function LoginForm() {
           </p>
         </div>
 
-        {/* Skip login option */}
-        <p className="text-center text-sm text-zinc-400 dark:text-zinc-500 mt-6">
+        {/* Demo + skip options */}
+        <div className="mt-6 space-y-3">
           <button
-            onClick={() => router.push('/')}
-            className="hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            onClick={() => {
+              enableDemoMode();
+              router.push('/');
+            }}
+            className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-purple-500/10 to-indigo-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:from-purple-500/20 hover:to-indigo-500/20 transition-all"
           >
-            Continuar sem conta (dados locais)
+            Explorar com dados de demonstração
           </button>
-        </p>
+          <p className="text-center text-xs text-zinc-400 dark:text-zinc-500">
+            <button
+              onClick={() => router.push('/')}
+              className="hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            >
+              Continuar sem conta (dados locais)
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );
