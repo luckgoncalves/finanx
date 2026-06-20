@@ -10,6 +10,8 @@ import {
   ChevronUpIcon,
   ArrowUpTrayIcon,
   MagnifyingGlassIcon,
+  PencilSquareIcon,
+  CheckIcon,
 } from '@heroicons/react/24/outline';
 import { CreditCardIcon as CreditCardSolid } from '@heroicons/react/24/solid';
 import { useFinance } from '@/context/FinanceContext';
@@ -19,6 +21,22 @@ import { Transaction } from '@/types/finance';
 import { TransactionList } from '@/components/TransactionList';
 import { ImportModal } from '@/components/ImportModal';
 import { ViewerBanner } from '@/components/ViewerBanner';
+
+const PREVIEW_STORAGE_KEY = 'finanx-card-previews';
+
+function loadPreviews(): Record<string, number> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const s = localStorage.getItem(PREVIEW_STORAGE_KEY);
+    return s ? JSON.parse(s) : {};
+  } catch {
+    return {};
+  }
+}
+
+function savePreviews(previews: Record<string, number>) {
+  localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previews));
+}
 
 const CARD_COLORS = [
   '#6366f1', '#f97316', '#10b981', '#ef4444',
@@ -35,6 +53,42 @@ export default function CartoesPage() {
   const [selectedCard, setSelectedCard] = useState<CreditCard | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [cardSearch, setCardSearch] = useState('');
+
+  // Preview (estimated) values per card/month
+  const [previews, setPreviews] = useState<Record<string, number>>(loadPreviews);
+  const [editingPreviewKey, setEditingPreviewKey] = useState<string | null>(null);
+  const [previewInput, setPreviewInput] = useState('');
+
+  const previewKey = (cardId: string, year: number, month: number) =>
+    `${cardId}-${year}-${month}`;
+
+  const startEditPreview = (key: string, current: number) => {
+    setEditingPreviewKey(key);
+    setPreviewInput(current > 0 ? String(current) : '');
+  };
+
+  const confirmPreview = (key: string) => {
+    const value = parseFloat(previewInput.replace(',', '.')) || 0;
+    setPreviews((prev) => {
+      const next = { ...prev };
+      if (value > 0) next[key] = value;
+      else delete next[key];
+      savePreviews(next);
+      return next;
+    });
+    setEditingPreviewKey(null);
+    setPreviewInput('');
+  };
+
+  const clearPreview = (key: string) => {
+    setPreviews((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      savePreviews(next);
+      return next;
+    });
+    setEditingPreviewKey(null);
+  };
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -287,20 +341,83 @@ export default function CartoesPage() {
                       month: 'long',
                       year: 'numeric',
                     });
-                    const total = monthTxns
+                    const realTotal = monthTxns
                       .filter((t) => t.type === 'expense')
                       .reduce((s, t) => s + t.amount, 0);
+                    const pk = previewKey(selectedCard.id, year, month);
+                    const preview = previews[pk] ?? 0;
+                    const projected = realTotal + preview;
+                    const isEditing = editingPreviewKey === pk;
 
                     return (
                       <div key={key}>
-                        <div className="flex items-center justify-between mb-3">
+                        {/* Month header */}
+                        <div className="flex items-center justify-between mb-2">
                           <h3 className="text-sm font-semibold capitalize text-zinc-500 dark:text-zinc-400">
                             {label}
                           </h3>
-                          <span className="text-sm font-mono font-semibold text-rose-600 dark:text-rose-400">
-                            {hideValues ? 'R$ •••••' : formatCurrency(total)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            {preview > 0 && !hideValues && (
+                              <span className="text-xs text-zinc-400 line-through font-mono">
+                                {formatCurrency(realTotal)}
+                              </span>
+                            )}
+                            <span className={`text-sm font-mono font-semibold ${preview > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                              {hideValues ? 'R$ •••••' : formatCurrency(projected)}
+                            </span>
+                          </div>
                         </div>
+
+                        {/* Preview row */}
+                        <div className="mb-3">
+                          {isEditing ? (
+                            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                              <PencilSquareIcon className="w-4 h-4 text-amber-500 shrink-0" />
+                              <span className="text-xs text-amber-600 dark:text-amber-400 shrink-0">Prévia estimada:</span>
+                              <input
+                                autoFocus
+                                type="text"
+                                inputMode="decimal"
+                                value={previewInput}
+                                onChange={(e) => setPreviewInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') confirmPreview(pk);
+                                  if (e.key === 'Escape') setEditingPreviewKey(null);
+                                }}
+                                placeholder="0,00"
+                                className="flex-1 min-w-0 bg-transparent text-sm font-mono outline-none placeholder-amber-400/50 text-amber-700 dark:text-amber-300"
+                              />
+                              <button onClick={() => confirmPreview(pk)} className="p-1 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors">
+                                <CheckIcon className="w-3.5 h-3.5" />
+                              </button>
+                              {preview > 0 && (
+                                <button onClick={() => clearPreview(pk)} className="p-1 rounded-lg text-amber-500 hover:bg-amber-500/20 transition-colors">
+                                  <XMarkIcon className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ) : preview > 0 ? (
+                            <button
+                              onClick={() => startEditPreview(pk, preview)}
+                              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl bg-amber-500/10 border border-dashed border-amber-500/30 hover:bg-amber-500/15 transition-colors"
+                            >
+                              <PencilSquareIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span className="text-xs text-amber-600 dark:text-amber-400 flex-1 text-left">
+                                Prévia estimada: <span className="font-mono font-semibold">{hideValues ? '•••••' : formatCurrency(preview)}</span>
+                              </span>
+                              <span className="text-xs text-amber-400">editar</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => startEditPreview(pk, 0)}
+                              className="w-full flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs text-zinc-400 dark:text-zinc-500 hover:text-amber-500 hover:bg-amber-500/10 transition-colors border border-dashed border-transparent hover:border-amber-500/20"
+                            >
+                              <PlusIcon className="w-3.5 h-3.5" />
+                              Adicionar valor prévio
+                            </button>
+                          )}
+                        </div>
+
                         <TransactionList
                           transactions={monthTxns}
                           type="expense"
