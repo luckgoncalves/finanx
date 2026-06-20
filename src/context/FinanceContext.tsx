@@ -1,11 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState, ReactNode, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { useShare } from './ShareContext';
 import { isDemoMode } from '@/lib/demo';
 import { DEMO_TRANSACTIONS } from '@/data/demoData';
+
 import {
   Transaction,
   Category,
@@ -13,6 +14,13 @@ import {
   DEFAULT_EXPENSE_CATEGORIES,
   DEFAULT_INCOME_CATEGORIES,
 } from '@/types/finance';
+
+const CLOSED_MONTHS_KEY = 'finanx-closed-months';
+
+interface ClosedMonth {
+  month: number;
+  year: number;
+}
 
 type Action =
   | { type: 'SET_STATE'; payload: Partial<FinanceState> }
@@ -43,6 +51,9 @@ interface FinanceContextType {
   state: FinanceState;
   loading: boolean;
   isViewerMode: boolean;
+  closedMonths: ClosedMonth[];
+  isMonthClosed: (month: number, year: number) => boolean;
+  toggleMonthClosed: (month: number, year: number) => void;
   addTransaction: (transaction: AddTransactionData) => Promise<void>;
   updateTransaction: (transaction: Transaction) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -125,10 +136,47 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { viewAsOwnerId } = useShare();
 
+  const [closedMonths, setClosedMonths] = useState<ClosedMonth[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem(CLOSED_MONTHS_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const isMonthClosed = useCallback((month: number, year: number): boolean => {
+    return closedMonths.some((cm) => cm.month === month && cm.year === year);
+  }, [closedMonths]);
+
+  const toggleMonthClosed = useCallback((month: number, year: number) => {
+    setClosedMonths((prev) => {
+      const exists = prev.some((cm) => cm.month === month && cm.year === year);
+      const next = exists
+        ? prev.filter((cm) => !(cm.month === month && cm.year === year))
+        : [...prev, { month, year }];
+      localStorage.setItem(CLOSED_MONTHS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   // Check if database is configured
   const isDatabaseConfigured = process.env.NEXT_PUBLIC_DATABASE_ENABLED === 'true';
   
   console.log('[Finance] Database:', isDatabaseConfigured, '| User:', user?.email);
+
+  const getSmartDefaultMonth = useCallback((closed: ClosedMonth[]): { month: number; year: number } => {
+    const now = new Date();
+    let month = now.getMonth() + 1;
+    let year = now.getFullYear();
+    // Advance past closed months (up to 12 months ahead to avoid infinite loop)
+    for (let i = 0; i < 12; i++) {
+      if (!closed.some((cm) => cm.month === month && cm.year === year)) break;
+      if (month === 12) { month = 1; year += 1; } else { month += 1; }
+    }
+    return { month, year };
+  }, []);
 
   // Load data from API or localStorage
   const loadData = useCallback(async () => {
@@ -180,12 +228,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Sempre exibir o mês atual ao abrir o app
-    const now = new Date();
-    dispatch({ type: 'SET_MONTH', payload: { month: now.getMonth() + 1, year: now.getFullYear() } });
+    // Open the first unclosed month starting from today
+    const defaultMonth = getSmartDefaultMonth(closedMonths);
+    dispatch({ type: 'SET_MONTH', payload: defaultMonth });
 
     dispatch({ type: 'SET_LOADING', payload: false });
-  }, [user, isDatabaseConfigured, viewAsOwnerId]);
+  }, [user, isDatabaseConfigured, viewAsOwnerId, closedMonths, getSmartDefaultMonth]);
 
   useEffect(() => {
     loadData();
@@ -396,6 +444,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         state,
         loading: state.loading,
         isViewerMode,
+        closedMonths,
+        isMonthClosed,
+        toggleMonthClosed,
         addTransaction,
         updateTransaction,
         deleteTransaction,
