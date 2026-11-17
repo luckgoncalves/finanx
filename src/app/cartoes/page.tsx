@@ -22,6 +22,7 @@ import { TransactionList } from '@/components/TransactionList';
 import { ImportModal } from '@/components/ImportModal';
 import { ViewerBanner } from '@/components/ViewerBanner';
 import { OpenFinancePanel } from '@/components/OpenFinancePanel';
+import { MonthSelector } from '@/components/MonthSelector';
 
 const PREVIEW_STORAGE_KEY = 'finanx-card-previews';
 
@@ -171,15 +172,19 @@ export default function CartoesPage() {
   };
 
   // Get transactions for a specific card
+  // Mês da fatura = mesmo mês navegado na aba Despesas (estado global)
+  const inSelectedMonth = (t: Transaction) =>
+    t.month === state.currentMonth && t.year === state.currentYear;
+
   const getCardTransactions = (cardId: string): Transaction[] => {
     return state.transactions
-      .filter((t) => t.creditCardId === cardId)
+      .filter((t) => t.creditCardId === cardId && inSelectedMonth(t))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
   const getCardTotal = (cardId: string) => {
     return state.transactions
-      .filter((t) => t.creditCardId === cardId && t.type === 'expense')
+      .filter((t) => t.creditCardId === cardId && t.type === 'expense' && inSelectedMonth(t))
       .reduce((sum, t) => sum + t.amount, 0);
   };
 
@@ -213,6 +218,9 @@ export default function CartoesPage() {
               </button>
             </div>
           )}
+        </div>
+        <div className="flex justify-end">
+          <MonthSelector />
         </div>
       </header>
 
@@ -251,7 +259,7 @@ export default function CartoesPage() {
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xs text-zinc-400">Total gasto</p>
+                <p className="text-xs text-zinc-400">Fatura do mês</p>
                 <p className="font-bold font-mono text-rose-600 dark:text-rose-400">
                   {hideValues ? 'R$ •••••' : formatCurrency(getCardTotal(selectedCard.id))}
                 </p>
@@ -463,7 +471,7 @@ export default function CartoesPage() {
           ) : (
             <>
               {cards.map((card) => {
-                const txCount = state.transactions.filter((t) => t.creditCardId === card.id).length;
+                const txCount = state.transactions.filter((t) => t.creditCardId === card.id && inSelectedMonth(t)).length;
                 const total = getCardTotal(card.id);
 
                 return (
@@ -491,7 +499,7 @@ export default function CartoesPage() {
                         </p>
                       </div>
                       <div className="text-right shrink-0 ml-2">
-                        <p className="text-xs text-zinc-400">Total</p>
+                        <p className="text-xs text-zinc-400">Fatura do mês</p>
                         <p className="font-bold font-mono text-rose-600 dark:text-rose-400 text-sm">
                           {hideValues ? 'R$ •••••' : formatCurrency(total)}
                         </p>
