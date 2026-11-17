@@ -35,6 +35,12 @@ export interface PluggyTransaction {
   type: 'DEBIT' | 'CREDIT';
   category: string | null;
   status?: string;
+  creditCardMetadata?: {
+    billForecastDate?: string | null; // 'YYYY-MM'
+    purchaseDate?: string | null;
+    installmentNumber?: number | null;
+    totalInstallments?: number | null;
+  } | null;
 }
 
 export interface PluggyBill {

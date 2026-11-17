@@ -38,9 +38,8 @@ function accountLabel(a: AccountBalance) {
 
 interface SyncResult {
   bankName: string | null;
-  billsCreated: number;
-  billsLinked: number;
-  billsUpdated: number;
+  billsProcessed: number;
+  purchasesImported: number;
   billsMarkedPaid: number;
   expensesMarkedPaid: { description: string }[];
   error?: string;
@@ -143,8 +142,7 @@ export function OpenFinancePanel({
         setMessage(data.error || "Erro ao sincronizar");
       } else {
         const results: SyncResult[] = data.results || [];
-        const created = results.reduce((s, r) => s + r.billsCreated, 0);
-        const linked = results.reduce((s, r) => s + r.billsLinked, 0);
+        const imported = results.reduce((s, r) => s + r.purchasesImported, 0);
         const paid = results.reduce(
           (s, r) => s + r.billsMarkedPaid + r.expensesMarkedPaid.length,
           0,
@@ -153,7 +151,7 @@ export function OpenFinancePanel({
           .filter((r) => r.error)
           .map((r) => r.bankName || "banco");
         setMessage(
-          `${created} fatura(s) nova(s), ${linked} vinculada(s) às já cadastradas, ${paid} conta(s) marcada(s) como paga(s).` +
+          `${imported} compra(s) de cartão importada(s), ${paid} conta(s)/fatura(s) marcada(s) como paga(s).` +
             (errors.length ? ` Falhou: ${errors.join(", ")}.` : ""),
         );
         await onSynced?.();
@@ -241,18 +239,18 @@ export function OpenFinancePanel({
                   {balances[c.id].map((a) => (
                     <li
                       key={a.id}
-                      className="flex items-center justify-between gap-2 text-xs"
+                      className={`flex justify-between gap-x-2 text-xs ${a.type === "CREDIT" ? "flex-wrap items-baseline" : "items-center"}`}
                     >
-                      <span className="text-zinc-500 dark:text-zinc-400 truncate">
+                      <span className="text-zinc-500 dark:text-zinc-400 min-w-0">
                         {accountLabel(a)}
                       </span>
                       {a.type === "CREDIT" ? (
-                        <span className="font-mono text-rose-600 dark:text-rose-400 shrink-0">
-                          {brl(a.balance)} usado
+                        <span className="font-mono text-rose-600 dark:text-rose-400 ml-auto whitespace-nowrap">
+                          {brl(a.balance)}
                           {a.creditLimit ? (
                             <span className="text-zinc-400">
-                              {" "}
-                              de {brl(a.creditLimit)}
+                              {" / "}
+                              {a.creditLimit.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
                             </span>
                           ) : null}
                         </span>

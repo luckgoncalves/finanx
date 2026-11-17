@@ -114,3 +114,45 @@ export function matchDebits(expenses: UnpaidExpense[], bankTxs: PluggyTransactio
   }
   return matches;
 }
+
+// ── Compras de cartão por fatura ─────────────────────────────────────────────
+
+export function monthOf(ymd: string): string {
+  return ymd.slice(0, 7);
+}
+
+export function shiftMonth(ym: string, delta: number): string {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  return d.toISOString().slice(0, 7);
+}
+
+/** Mês de fatura informado pela Pluggy (ou mês da transação, se faltar). */
+export function forecastMonth(t: PluggyTransaction): string {
+  return t.creditCardMetadata?.billForecastDate || monthOf(day(t.date));
+}
+
+/**
+ * Bancos diferem: no Nubank o "mês da fatura" é o do vencimento; no C6 é o do fechamento (mês anterior).
+ * Escolhe o deslocamento (0 ou -1) que faz a soma das compras bater melhor com o total das faturas.
+ */
+export function pickMonthOffset(bills: PluggyBill[], purchases: PluggyTransaction[]): 0 | -1 {
+  const sums = new Map<string, number>();
+  for (const t of purchases) sums.set(forecastMonth(t), (sums.get(forecastMonth(t)) ?? 0) + t.amount);
+  const months = new Set(sums.keys());
+  const err = (offset: number) =>
+    bills
+      .filter((b) => months.has(shiftMonth(monthOf(day(b.dueDate)), offset)))
+      .reduce((e, b) => e + Math.abs(b.totalAmount - (sums.get(shiftMonth(monthOf(day(b.dueDate)), offset)) ?? 0)), 0);
+  return err(-1) < err(0) ? -1 : 0;
+}
+
+/** Palavra que identifica o banco na descrição de uma fatura lançada à mão. */
+export function manualBillPattern(bankName: string): RegExp {
+  const n = bankName.toLowerCase();
+  if (n.startsWith('nu')) return /^\s*nu(bank)?\b/i;
+  if (n.startsWith('c6')) return /^\s*c6\b/i;
+  if (n.startsWith('ita')) return /ita[uú]/i;
+  const word = n.split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^\\s*${word}\\b`, 'i');
+}

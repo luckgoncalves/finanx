@@ -1,16 +1,30 @@
 import { prisma } from './prisma';
 import { getItem, listAccounts, listBills, listTransactionsSince, PluggyAccount } from './pluggy';
-import { addDays, matchDebits, planBills } from './pluggy-match';
+import {
+  addDays,
+  day,
+  forecastMonth,
+  isCardPayment,
+  manualBillPattern,
+  matchDebits,
+  monthOf,
+  pickMonthOffset,
+  planBills,
+  shiftMonth,
+} from './pluggy-match';
+import { suggestCategory } from './parsers/categoryMapper';
 
 const LOOKBACK_DAYS = 75;
+const CARD_LOOKBACK_DAYS = 160; // compras de faturas fechadas nos últimos ~75 dias
 
 export interface SyncResult {
   connectionId: string;
   bankName: string | null;
-  billsCreated: number;
-  billsLinked: number;
-  billsUpdated: number;
+  billsProcessed: number;
+  purchasesImported: number;
   billsMarkedPaid: number;
+  manualBillsReplaced: string[];
+  manualMovedToCard: string[];
   expensesMarkedPaid: { id: string; description: string; paidAt: string }[];
   error?: string;
 }
@@ -55,10 +69,11 @@ export async function syncConnection(connectionId: string, today = new Date().to
   const result: SyncResult = {
     connectionId,
     bankName: conn.bankName,
-    billsCreated: 0,
-    billsLinked: 0,
-    billsUpdated: 0,
+    billsProcessed: 0,
+    purchasesImported: 0,
     billsMarkedPaid: 0,
+    manualBillsReplaced: [],
+    manualMovedToCard: [],
     expensesMarkedPaid: [],
   };
 
@@ -69,84 +84,152 @@ export async function syncConnection(connectionId: string, today = new Date().to
     const since = addDays(today, -LOOKBACK_DAYS);
     const accounts = await listAccounts(conn.itemId);
 
-    // 1) Faturas de cartão → despesas com vencimento
+    // 1) Cartões: compras de cada fatura fechada entram no cartão (agrupadas pelo app como fatura),
+    //    com uma linha de ajuste para o total bater com o banco. A fatura lançada à mão é substituída.
     for (const account of accounts.filter((a) => a.type === 'CREDIT')) {
       const card = await ensureCard(conn.userId, bankName, account);
-      const [bills, txs] = await Promise.all([listBills(account.id), listTransactionsSince(account.id, since)]);
-      const plans = planBills(bills, txs).filter((p) => p.dueDate >= since);
+      const [bills, txs] = await Promise.all([
+        listBills(account.id),
+        listTransactionsSince(account.id, addDays(today, -CARD_LOOKBACK_DAYS), 40),
+      ]);
+      const plans = planBills(bills, txs).filter((p) => p.dueDate >= since && p.totalAmount > 0);
+      const purchases = txs.filter((t) => !isCardPayment(t));
+      const offset = pickMonthOffset(bills, purchases);
+      const manualPattern = manualBillPattern(bankName);
 
       for (const plan of plans) {
-        const externalId = `pluggy-bill:${plan.billId}`;
         const date = atNoon(plan.dueDate);
-        const existing = await prisma.transaction.findUnique({ where: { externalId } });
-        const keepPaid = existing?.paid ?? false; // nunca desmarca um pagamento já registrado
-        const paid = keepPaid || plan.paid;
-        const paidAt = existing?.paidAt ?? (plan.paidAt ? atNoon(plan.paidAt) : null);
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        const billMonth = shiftMonth(monthOf(plan.dueDate), offset);
+        const items = purchases.filter((t) => forecastMonth(t) === billMonth);
+        const paidAt = plan.paidAt ? atNoon(plan.paidAt) : null;
 
-        if (!existing) {
-          if (plan.totalAmount <= 0) continue;
+        const created = await prisma.transaction.createMany({
+          skipDuplicates: true,
+          data: items.map((t) => {
+            const meta = t.creditCardMetadata;
+            const total = meta?.totalInstallments ?? null;
+            return {
+              userId: conn.userId,
+              description: t.description.replace(/\s+/g, ' ').trim(),
+              amount: Math.round(t.amount * 100) / 100,
+              type: 'expense',
+              category: suggestCategory(t.description),
+              date,
+              month,
+              year,
+              paid: plan.paid,
+              paidAt: plan.paid ? paidAt : null,
+              isInstallment: Boolean(total && total > 1),
+              installmentNumber: total && total > 1 ? meta?.installmentNumber ?? null : null,
+              totalInstallments: total && total > 1 ? total : null,
+              importSource: 'pluggy',
+              creditCardId: card.id,
+              purchaseDate: atNoon(day(meta?.purchaseDate || t.date)),
+              externalId: `pluggy-tx:${t.id}`,
+            };
+          }),
+        });
+        result.purchasesImported += created.count;
 
-          // Já existe a fatura cadastrada à mão? Vincula em vez de duplicar:
-          // mesma categoria cartão, valor ±1% e data até 10 dias do vencimento.
-          const tolerance = Math.max(1, plan.totalAmount * 0.01);
-          const manual = await prisma.transaction.findFirst({
+        // Ajuste: diferença entre o total da fatura e a soma das compras listadas pela Pluggy
+        // Compras lançadas à mão que já fazem parte deste cartão/mês contam na soma.
+        const manualInCard = await prisma.transaction.aggregate({
+          where: {
+            userId: conn.userId,
+            creditCardId: card.id,
+            month,
+            year,
+            OR: [{ importSource: null }, { importSource: { not: 'pluggy' } }],
+          },
+          _sum: { amount: true },
+        });
+        let sum = items.reduce((s, t) => s + t.amount, 0) + Number(manualInCard._sum.amount ?? 0);
+        let diff = Math.round((plan.totalAmount - sum) * 100) / 100;
+
+        // A diferença é uma compra lançada à mão sem cartão (ex.: parcela que a Pluggy não lista)? Move para o cartão.
+        if (Math.abs(diff) >= 0.01) {
+          const loose = await prisma.transaction.findFirst({
             where: {
               userId: conn.userId,
               type: 'expense',
               category: 'cartao',
+              creditCardId: null,
               externalId: null,
-              amount: { gte: plan.totalAmount - tolerance, lte: plan.totalAmount + tolerance },
-              date: { gte: atNoon(addDays(plan.dueDate, -10)), lte: atNoon(addDays(plan.dueDate, 10)) },
+              month,
+              year,
+              amount: { gte: diff - 0.5, lte: diff + 0.5 },
             },
-            orderBy: { date: 'asc' },
           });
-          if (manual) {
-            const becamePaid = !manual.paid && plan.paid;
+          if (loose) {
             await prisma.transaction.update({
-              where: { id: manual.id },
+              where: { id: loose.id },
               data: {
-                externalId,
-                ...(becamePaid ? { paid: true, paidAt: plan.paidAt ? atNoon(plan.paidAt) : new Date() } : {}),
+                creditCardId: card.id,
+                ...(plan.paid && !loose.paid ? { paid: true, paidAt } : {}),
               },
             });
-            result.billsLinked++;
-            if (becamePaid) result.billsMarkedPaid++;
-            continue;
+            sum += Number(loose.amount);
+            diff = Math.round((plan.totalAmount - sum) * 100) / 100;
+            result.manualMovedToCard.push(loose.description);
           }
-
-          // Faturas antigas sem correspondente não são criadas, para não inflar meses passados.
-          if (plan.dueDate < addDays(today, -10)) continue;
-          await prisma.transaction.create({
-            data: {
+        }
+        const adjId = `pluggy-adj:${plan.billId}`;
+        if (Math.abs(diff) >= 0.01) {
+          await prisma.transaction.upsert({
+            where: { externalId: adjId },
+            create: {
               userId: conn.userId,
-              description: `Fatura ${card.name}`,
-              amount: plan.totalAmount,
+              description: 'Ajuste da fatura (encargos, parcelas antigas ou itens não listados)',
+              amount: diff,
               type: 'expense',
               category: 'cartao',
               date,
-              month: date.getMonth() + 1,
-              year: date.getFullYear(),
-              paid,
-              paidAt: paid ? paidAt : null,
+              month,
+              year,
+              paid: plan.paid,
+              paidAt: plan.paid ? paidAt : null,
               importSource: 'pluggy',
-              // sem creditCardId: a fatura não entra no "total gasto" do cartão (as compras já entram)
-              externalId,
+              creditCardId: card.id,
+              externalId: adjId,
             },
+            update: { amount: diff },
           });
-          result.billsCreated++;
-          if (paid) result.billsMarkedPaid++;
         } else {
-          const amountChanged = Number(existing.amount) !== plan.totalAmount;
-          const becamePaid = !existing.paid && paid;
-          if (amountChanged || becamePaid) {
-            await prisma.transaction.update({
-              where: { id: existing.id },
-              data: { amount: plan.totalAmount, paid, paidAt: paid ? paidAt : null },
-            });
-            result.billsUpdated++;
-            if (becamePaid) result.billsMarkedPaid++;
-          }
+          await prisma.transaction.deleteMany({ where: { externalId: adjId } });
         }
+
+        // Quitada no banco → marca as linhas desta fatura como pagas (nunca desmarca)
+        if (plan.paid) {
+          const r = await prisma.transaction.updateMany({
+            where: { userId: conn.userId, creditCardId: card.id, month, year, paid: false, importSource: 'pluggy' },
+            data: { paid: true, paidAt },
+          });
+          if (r.count > 0) result.billsMarkedPaid++;
+        }
+
+        // Substitui a fatura lançada à mão (ou criada pela versão anterior) deste cartão neste mês
+        const candidates = await prisma.transaction.findMany({
+          where: {
+            userId: conn.userId,
+            type: 'expense',
+            category: 'cartao',
+            creditCardId: null,
+            month,
+            year,
+            OR: [{ externalId: null }, { externalId: `pluggy-bill:${plan.billId}` }],
+          },
+          select: { id: true, description: true, externalId: true },
+        });
+        const toRemove = candidates.filter(
+          (c) => c.externalId === `pluggy-bill:${plan.billId}` || manualPattern.test(c.description)
+        );
+        if (toRemove.length) {
+          await prisma.transaction.deleteMany({ where: { id: { in: toRemove.map((c) => c.id) } } });
+          result.manualBillsReplaced.push(...toRemove.map((c) => c.description));
+        }
+        result.billsProcessed++;
       }
     }
 
