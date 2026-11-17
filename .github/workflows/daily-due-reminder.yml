@@ -24,6 +24,11 @@ jobs:
             echo "::error::Configure o secret CRON_SECRET em Settings > Secrets > Actions"
             exit 1
           fi
+      - name: Sync Open Finance (Pluggy)
+        continue-on-error: true
+        run: |
+          curl -sS -w "\nHTTP %{http_code}\n" -X GET "${{ secrets.API_BASE_URL }}/api/cron/pluggy-sync" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
       - name: Call daily-due API
         run: |
           OUTPUT=$(curl -sS -w "\n%{http_code}" -X GET "${{ secrets.API_BASE_URL }}/api/cron/daily-due" \

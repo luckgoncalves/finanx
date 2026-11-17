@@ -18,6 +18,7 @@ import { Transaction } from '@/types/finance';
 import { TransactionList } from '@/components/TransactionList';
 import { ImportModal } from '@/components/ImportModal';
 import { ViewerBanner } from '@/components/ViewerBanner';
+import { OpenFinancePanel } from '@/components/OpenFinancePanel';
 
 const CARD_COLORS = [
   '#6366f1', '#f97316', '#10b981', '#ef4444',
@@ -158,6 +159,10 @@ export default function CartoesPage() {
           )}
         </div>
       </header>
+
+      {!isViewerMode && !selectedCard && (
+        <OpenFinancePanel onSynced={async () => { await fetchCards(); await refreshData(); }} />
+      )}
 
       {/* Card list or detail */}
       {selectedCard ? (

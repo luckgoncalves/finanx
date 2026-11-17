@@ -21,6 +21,7 @@ model User {
   sharedAsOwner       AccountShare[]      @relation("ShareOwner")
   sharedAsViewer      AccountShare[]      @relation("ShareViewer")
   pushSubscriptions   PushSubscription[]
+  bankConnections     BankConnection[]
 
   @@map("users")
 }
@@ -67,6 +68,7 @@ model CreditCard {
   brand        String?
   color        String        @default("#6366f1")
   isActive     Boolean       @default(true) @map("is_active")
+  pluggyAccountId String?    @unique @map("pluggy_account_id")
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -98,6 +100,7 @@ model Transaction {
   importSource       String?  @map("import_source") // 'ofx' | 'csv' | null (manual)
   creditCardId       String?  @map("credit_card_id")
   purchaseDate       DateTime? @db.Date @map("purchase_date") // data da compra (pode diferir da data da fatura)
+  externalId         String?  @unique @map("external_id") // ex: 'pluggy-bill:<id>' (idempotência de sync)
 
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
@@ -125,4 +128,21 @@ model Category {
 
   @@index([userId])
   @@map("categories")
+}
+
+model BankConnection {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  provider     String    @default("pluggy")
+  itemId       String    @unique @map("item_id")
+  bankName     String?   @map("bank_name")
+  status       String?
+  lastSyncAt   DateTime? @map("last_sync_at")
+  lastError    String?   @map("last_error")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("bank_connections")
 }
