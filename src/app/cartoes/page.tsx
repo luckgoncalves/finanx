@@ -21,6 +21,7 @@ import { Transaction } from '@/types/finance';
 import { TransactionList } from '@/components/TransactionList';
 import { ImportModal } from '@/components/ImportModal';
 import { ViewerBanner } from '@/components/ViewerBanner';
+import { OpenFinancePanel } from '@/components/OpenFinancePanel';
 
 const PREVIEW_STORAGE_KEY = 'finanx-card-previews';
 
@@ -214,6 +215,10 @@ export default function CartoesPage() {
           )}
         </div>
       </header>
+
+      {!isViewerMode && !selectedCard && (
+        <OpenFinancePanel onSynced={async () => { await fetchCards(); await refreshData(); }} />
+      )}
 
       {/* Card list or detail */}
       {selectedCard ? (
