@@ -127,9 +127,10 @@ export function UserMenu({ onShowOnboarding }: UserMenuProps) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        aria-label="Perfil e configurações"
+        className="flex items-center p-0.5 rounded-full"
       >
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-medium text-sm">
+        <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-zinc-100 font-semibold text-[15px]">
           {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
         </div>
       </button>

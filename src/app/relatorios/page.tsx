@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { useUI } from '@/context/UIContext';
-import { MonthSelector } from '@/components/MonthSelector';
+import { PageHeader } from '@/components/PageHeader';
 import { ViewerBanner } from '@/components/ViewerBanner';
 import { MONTHS } from '@/types/finance';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
@@ -113,15 +113,8 @@ export default function RelatoriosPage() {
     <div className="min-h-screen">
       <ViewerBanner />
       {/* Header */}
-      <header className="px-6 pt-8 pb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Análise</p>
-            <h1 className="text-2xl font-bold">Relatórios</h1>
-          </div>
-          <MonthSelector />
-        </div>
-      </header>
+      <PageHeader title="Relatórios" />
+      <div className="h-4" />
 
       {/* Month Overview */}
       <section className="px-6 mb-6">

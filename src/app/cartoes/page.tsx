@@ -21,7 +21,7 @@ import { TransactionList } from '@/components/TransactionList';
 import { ImportModal } from '@/components/ImportModal';
 import { ViewerBanner } from '@/components/ViewerBanner';
 import { CardCarousel, CARD_PALETTE, CardLink } from '@/components/CardCarousel';
-import { MonthSelector } from '@/components/MonthSelector';
+import { PageHeader } from '@/components/PageHeader';
 
 const PREVIEW_STORAGE_KEY = 'finanx-card-previews';
 
@@ -258,39 +258,35 @@ export default function CartoesPage() {
     <div className="min-h-screen">
       <ViewerBanner />
 
-      {/* Header */}
-      <header className="px-6 pt-8 pb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-950">Cartões</h1>
-          </div>
-          {!isViewerMode && (
-            <div className="flex items-center gap-2">
+      <PageHeader
+        title="Cartões"
+        actions={
+          !isViewerMode && (
+            <>
               {hasConnections && (
                 <button
                   onClick={syncNow}
                   disabled={syncing}
-                  aria-label="Sincronizar com os bancos"
-                  className="flex items-center gap-1.5 h-10 px-3 rounded-xl text-sm font-medium bg-white/70 border border-zinc-200 text-zinc-950 disabled:opacity-60"
+                  aria-label={syncing ? 'Sincronizando' : 'Sincronizar com os bancos'}
+                  title={syncMsg || 'Sincronizar com os bancos'}
+                  className="w-11 h-11 rounded-full flex items-center justify-center text-zinc-800 disabled:opacity-60"
                 >
-                  <ArrowPathIcon className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? 'Sincronizando…' : syncMsg || 'Sincronizar'}
+                  <ArrowPathIcon className={`w-[22px] h-[22px] ${syncing ? 'animate-spin' : ''}`} />
                 </button>
               )}
               <button
                 onClick={() => setShowImport(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                aria-label="Importar fatura"
+                className="w-11 h-11 rounded-full flex items-center justify-center text-zinc-800"
               >
-                <ArrowUpTrayIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Importar</span>
+                <ArrowUpTrayIcon className="w-[22px] h-[22px]" />
               </button>
-            </div>
-          )}
-        </div>
-        <div className="flex justify-end">
-          <MonthSelector />
-        </div>
-      </header>
+            </>
+          )
+        }
+      />
+      {syncMsg && !syncing && <p className="px-5 max-w-lg mx-auto text-sm text-zinc-800">{syncMsg}</p>}
+      <div className="h-4" />
 
       {/* Card list or detail */}
       {selectedCard ? (

@@ -1,21 +1,20 @@
 'use client';
 
 import { useFinance } from '@/context/FinanceContext';
-import { useOnboarding } from '@/context/OnboardingContext';
+import { PageHeader } from '@/components/PageHeader';
+import { useAuth } from '@/context/AuthContext';
 import { useUI } from '@/context/UIContext';
-import { MonthSelector } from '@/components/MonthSelector';
 import { SummaryCard } from '@/components/SummaryCard';
-import { UserMenu } from '@/components/UserMenu';
 import { ViewerBanner } from '@/components/ViewerBanner';
 import { DashboardSkeleton } from '@/components/Skeleton';
 import { MONTHS } from '@/types/finance';
 import Link from 'next/link';
-import { PlusIcon, ArrowRightIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
+  const { user } = useAuth();
   const { state, getMonthlyData, getYearlyTotal, loading, isViewerMode } = useFinance();
-  const { showOnboarding } = useOnboarding();
-  const { hideValues, toggleHideValues } = useUI();
+  const { hideValues } = useUI();
   const { currentMonth, currentYear } = state;
   
   const monthlyData = getMonthlyData(currentMonth, currentYear);
@@ -33,35 +32,8 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <ViewerBanner />
-      {/* Header */}
-      <header className="px-6 pt-8 pb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Bem-vindo ao</p>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
-              FinanX
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleHideValues}
-              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              aria-label={hideValues ? 'Mostrar valores' : 'Ocultar valores'}
-            >
-              {hideValues ? (
-                <EyeSlashIcon className="w-5 h-5" />
-              ) : (
-                <EyeIcon className="w-5 h-5" />
-              )}
-            </button>
-            <UserMenu onShowOnboarding={showOnboarding} />
-          </div>
-        </div>
-        
-        <div className="flex justify-center mb-6">
-          <MonthSelector />
-        </div>
-
+      <PageHeader title={`Olá, ${(user?.name || '').split(' ')[0] || 'bem-vindo'}`} kicker="Finanx" />
+      <header className="px-6 pt-4 pb-6">
         {/* Summary Cards */}
         <div className="grid gap-4">
           <SummaryCard

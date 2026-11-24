@@ -4,98 +4,50 @@ import { ChevronLeftIcon, ChevronRightIcon, LockClosedIcon, LockOpenIcon } from 
 import { useFinance } from '@/context/FinanceContext';
 import { MONTHS } from '@/types/finance';
 
-export function MonthSelector() {
-  const { state, setMonth, isMonthClosed, toggleMonthClosed } = useFinance();
+/** Seletor de mês compacto: pílula "‹ Dezembro 2026 ›" + botão de fechar mês. */
+export function MonthSelector({ className = '' }: { className?: string }) {
+  const { state, setMonth, isMonthClosed, toggleMonthClosed, isViewerMode } = useFinance();
   const { currentMonth, currentYear } = state;
-
   const closed = isMonthClosed(currentMonth, currentYear);
 
-  const goToPreviousMonth = () => {
-    if (currentMonth === 1) {
-      setMonth(12, currentYear - 1);
-    } else {
-      setMonth(currentMonth - 1, currentYear);
-    }
+  const go = (delta: number) => {
+    const d = new Date(currentYear, currentMonth - 1 + delta, 1);
+    setMonth(d.getMonth() + 1, d.getFullYear());
   };
-
-  const goToNextMonth = () => {
-    if (currentMonth === 12) {
-      setMonth(1, currentYear + 1);
-    } else {
-      setMonth(currentMonth + 1, currentYear);
-    }
-  };
-
-  const goToCurrentMonth = () => {
-    const now = new Date();
-    setMonth(now.getMonth() + 1, now.getFullYear());
-  };
-
-  const isCurrentMonth = () => {
-    const now = new Date();
-    return currentMonth === now.getMonth() + 1 && currentYear === now.getFullYear();
-  };
+  const now = new Date();
+  const isCurrent = currentMonth === now.getMonth() + 1 && currentYear === now.getFullYear();
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="flex items-center justify-between gap-4">
-        <button
-          onClick={goToPreviousMonth}
-          className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          aria-label="Mês anterior"
-        >
-          <ChevronLeftIcon className="w-5 h-5" />
+    <div className={`flex items-center gap-2 ${className}`}>
+      <div className="flex-1 min-w-0 flex items-center justify-between h-11 rounded-full bg-white/70 border border-zinc-200">
+        <button onClick={() => go(-1)} aria-label="Mês anterior" className="w-11 h-11 flex items-center justify-center text-zinc-950 shrink-0">
+          <ChevronLeftIcon className="w-[18px] h-[18px]" strokeWidth={2.2} />
         </button>
-
-        <div className="flex flex-col items-center">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={goToCurrentMonth}
-              className={`
-                text-lg font-semibold transition-colors
-                ${!isCurrentMonth() ? 'hover:text-emerald-500 dark:hover:text-emerald-400' : ''}
-              `}
-              title="Voltar ao mês atual"
-            >
-              {MONTHS[currentMonth - 1]}
-            </button>
-            {closed && (
-              <LockClosedIcon className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0" />
-            )}
-          </div>
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">{currentYear}</span>
-        </div>
-
         <button
-          onClick={goToNextMonth}
-          className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          aria-label="Próximo mês"
+          onClick={() => setMonth(now.getMonth() + 1, now.getFullYear())}
+          disabled={isCurrent}
+          title={isCurrent ? undefined : 'Voltar ao mês atual'}
+          className="min-w-0 truncate text-[15px] font-semibold text-zinc-950"
         >
-          <ChevronRightIcon className="w-5 h-5" />
+          {MONTHS[currentMonth - 1]} <span className="font-medium text-zinc-800">{currentYear}</span>
+        </button>
+        <button onClick={() => go(1)} aria-label="Próximo mês" className="w-11 h-11 flex items-center justify-center text-zinc-950 shrink-0">
+          <ChevronRightIcon className="w-[18px] h-[18px]" strokeWidth={2.2} />
         </button>
       </div>
-
-      <button
-        onClick={() => toggleMonthClosed(currentMonth, currentYear)}
-        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-          closed
-            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
-            : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-        }`}
-        title={closed ? 'Reabrir mês' : 'Fechar mês'}
-      >
-        {closed ? (
-          <>
-            <LockClosedIcon className="w-3.5 h-3.5" />
-            Mês fechado — reabrir
-          </>
-        ) : (
-          <>
-            <LockOpenIcon className="w-3.5 h-3.5" />
-            Fechar mês
-          </>
-        )}
-      </button>
+      {!isViewerMode && (
+        <button
+          onClick={() => toggleMonthClosed(currentMonth, currentYear)}
+          aria-label={closed ? 'Reabrir mês' : 'Fechar mês'}
+          aria-pressed={closed}
+          title={closed ? 'Mês fechado — tocar para reabrir' : 'Fechar mês'}
+          className={`w-11 h-11 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+            closed ? 'bg-amber-100 border-amber-300 text-amber-800' : 'bg-white/70 border-zinc-200 text-zinc-800'
+          }`}
+        >
+          {closed ? <LockClosedIcon className="w-[18px] h-[18px]" /> : <LockOpenIcon className="w-[18px] h-[18px]" />}
+        </button>
+      )}
     </div>
   );
 }

@@ -25,24 +25,22 @@ export function SummaryCard({ title, amount, type, subtitle, compact = false }: 
     switch (type) {
       case 'income':
         return {
-          bg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-          shadow: 'shadow-emerald-500/25',
+          bg: 'bg-gradient-to-br from-[#2F6B58] to-[#235347]',
+          shadow: 'shadow-[#235347]/20',
           icon: ArrowTrendingUpIcon,
           iconBg: 'bg-white/20',
         };
       case 'expense':
         return {
-          bg: 'bg-gradient-to-br from-rose-500 to-rose-600',
-          shadow: 'shadow-rose-500/25',
+          bg: 'bg-gradient-to-br from-[#163832] to-[#0B2B26]',
+          shadow: 'shadow-[#0B2B26]/20',
           icon: ArrowTrendingDownIcon,
           iconBg: 'bg-white/20',
         };
       case 'balance':
         return {
-          bg: amount >= 0 
-            ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
-            : 'bg-gradient-to-br from-rose-500 to-orange-600',
-          shadow: amount >= 0 ? 'shadow-emerald-500/25' : 'shadow-rose-500/25',
+          bg: 'bg-gradient-to-br from-[#235347] to-[#0B2B26]',
+          shadow: 'shadow-[#0B2B26]/25',
           icon: amount >= 0 ? ArrowTrendingUpIcon : ArrowTrendingDownIcon,
           iconBg: 'bg-white/20',
         };
@@ -59,7 +57,7 @@ export function SummaryCard({ title, amount, type, subtitle, compact = false }: 
           <p className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-white/80`}>{title}</p>
           <p className={`${compact ? 'text-base sm:text-lg' : 'text-lg sm:text-2xl'} font-bold mt-1 font-mono`}>
             {hideValues ? 'R$ •••••' : (
-              <>{type === 'balance' && amount < 0 ? '-' : ''}{formatCurrency(amount)}</>
+              <>{type === 'balance' && amount < 0 ? '− ' : ''}{formatCurrency(amount)}</>
             )}
           </p>
           {subtitle && (

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFinance } from '@/context/FinanceContext';
 import { ViewerBanner } from '@/components/ViewerBanner';
+import { PageHeader } from '@/components/PageHeader';
 import { TransactionType } from '@/types/finance';
 
 type Repeat = 'single' | 'installment' | 'recurring';
@@ -81,8 +82,8 @@ function LancarForm() {
   return (
     <div className="min-h-screen">
       <ViewerBanner />
-      <form onSubmit={handleSubmit} className="px-5 pt-8 pb-6 max-w-lg mx-auto flex flex-col gap-5">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-950">Novo lançamento</h1>
+      <PageHeader title="Novo lançamento" showMonth={false} />
+      <form onSubmit={handleSubmit} className="px-5 pt-4 pb-6 max-w-lg mx-auto flex flex-col gap-5">
 
         <div role="group" aria-label="Tipo" className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-zinc-950/5">
           <button type="button" aria-pressed={type === 'expense'} onClick={() => setType('expense')} className={seg(type === 'expense')}>

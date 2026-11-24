@@ -7,7 +7,7 @@ import { CheckIcon, ChevronDownIcon, LinkIcon, PencilIcon, ArrowUpTrayIcon, Tras
 import { TransactionForm } from '@/components/TransactionForm';
 import { useFinance } from '@/context/FinanceContext';
 import { useUI } from '@/context/UIContext';
-import { MonthSelector } from '@/components/MonthSelector';
+import { PageHeader } from '@/components/PageHeader';
 import { ViewerBanner } from '@/components/ViewerBanner';
 import { DespesasPageSkeleton } from '@/components/Skeleton';
 import { CreditCard, Transaction } from '@/types/finance';
@@ -279,12 +279,8 @@ function ExtratoContent() {
   return (
     <div className="min-h-screen">
       <ViewerBanner />
-      <div className="px-5 pt-8 pb-6 max-w-lg mx-auto flex flex-col gap-5">
-        <header className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-950">Extrato</h1>
-          <MonthSelector />
-        </header>
-
+      <PageHeader title="Extrato" />
+      <div className="px-5 pt-4 pb-6 max-w-lg mx-auto flex flex-col gap-5">
         <div role="tablist" aria-label="Seções" className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-zinc-950/5">
           {(['pagar', 'historico'] as Tab[]).map((t) => (
             <button
