@@ -1,13 +1,14 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ChevronRightIcon, TrashIcon, Cog6ToothIcon, XMarkIcon, LinkIcon, LinkSlashIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, Cog6ToothIcon, XMarkIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { CreditCard } from '@/types/finance';
 
 interface Props {
   cards: CreditCard[];
   getTotal: (cardId: string) => number;
   getCount: (cardId: string) => number;
+  getDue?: (cardId: string) => string | null;
   isPaid: (cardId: string) => boolean;
   hideValues: boolean;
   readOnly: boolean;
@@ -93,7 +94,7 @@ function LimitInfo({ link, hideValues }: { link: CardLink; hideValues: boolean }
     ? new Date(link.lastSyncAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
     : null;
   return (
-    <div className="flex flex-col gap-2 pt-1">
+    <div className="flex flex-col gap-2" title="O limite usado inclui parcelas futuras, por isso pode ser maior que a fatura.">
       <div className="flex items-baseline justify-between text-sm">
         <span className="text-zinc-800">Limite usado</span>
         <span className="font-mono font-semibold text-zinc-950">
@@ -114,7 +115,6 @@ function LimitInfo({ link, hideValues }: { link: CardLink; hideValues: boolean }
           {synced ? ` · ${synced}` : ''}
         </span>
       </div>
-      <p className="text-[12px] text-zinc-800">O limite usado inclui parcelas futuras, por isso pode ser maior que a fatura.</p>
     </div>
   );
 }
@@ -229,46 +229,52 @@ function CardSettings({
             {saving ? 'Salvando…' : 'Salvar'}
           </button>
 
-          {link && onDisconnect && (
-            <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-200">
-              <span className="text-sm font-medium text-zinc-800">Open Finance</span>
-              <p className="text-[13px] text-zinc-800">
-                Conectado pelo {link.bankName}. Desconectar para de atualizar todas as contas e cartões desse banco; o que já foi importado continua no app.
-              </p>
+          <div className="flex flex-col gap-2 pt-3 border-t border-zinc-200">
+            {link && (
+              <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-zinc-800">
+                <LinkIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                Open Finance · {link.bankName}
+              </span>
+            )}
+            <div className={`grid gap-2 ${link && onDisconnect ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {link && onDisconnect && (
+                <button
+                  onClick={async () => {
+                    if (!confirmUnlink) return setConfirmUnlink(true);
+                    await onDisconnect(link.connectionId);
+                  }}
+                  className={`min-h-11 px-2 py-2 rounded-xl text-sm font-semibold leading-tight ${
+                    confirmUnlink ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-950/5 text-zinc-950'
+                  }`}
+                >
+                  {confirmUnlink ? 'Toque de novo' : `Desconectar ${link.bankName}`}
+                </button>
+              )}
               <button
                 onClick={async () => {
-                  if (!confirmUnlink) return setConfirmUnlink(true);
-                  await onDisconnect(link.connectionId);
+                  if (!confirmDelete) return setConfirmDelete(true);
+                  await onDelete();
                 }}
-                className={`h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold ${
-                  confirmUnlink ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-950/5 text-zinc-950'
+                className={`min-h-11 px-2 py-2 rounded-xl text-sm font-semibold leading-tight ${
+                  confirmDelete ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700'
                 }`}
               >
-                <LinkSlashIcon className="w-5 h-5" />
-                {confirmUnlink ? `Toque de novo para desconectar o ${link.bankName}` : `Desconectar ${link.bankName}`}
+                {confirmDelete ? 'Toque de novo' : 'Remover cartão'}
               </button>
             </div>
-          )}
-
-          <button
-            onClick={async () => {
-              if (!confirmDelete) return setConfirmDelete(true);
-              await onDelete();
-            }}
-            className={`h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold ${
-              confirmDelete ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700'
-            }`}
-          >
-            <TrashIcon className="w-5 h-5" />
-            {confirmDelete ? 'Toque de novo para remover' : 'Remover cartão'}
-          </button>
+            {confirmUnlink && link && (
+              <p className="text-[12px] text-zinc-800">
+                Para de atualizar todas as contas e cartões do {link.bankName}. O que já foi importado continua no app.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-export function CardCarousel({ cards, getTotal, getCount, isPaid, hideValues, readOnly, onOpen, onDelete, onSave, getLink, onDisconnect }: Props) {
+export function CardCarousel({ cards, getTotal, getCount, isPaid, hideValues, readOnly, onOpen, onDelete, onSave, getLink, onDisconnect, getDue }: Props) {
   const scroller = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [settingsFor, setSettingsFor] = useState<CreditCard | null>(null);
@@ -326,6 +332,10 @@ export function CardCarousel({ cards, getTotal, getCount, isPaid, hideValues, re
   const count = getCount(current.id);
   const paid = count > 0 && isPaid(current.id);
   const link = getLink?.(current) ?? null;
+  const due = getDue?.(current.id) ?? null;
+  const dueLabel = due
+    ? new Date(due.slice(0, 10) + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')
+    : null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -380,7 +390,7 @@ export function CardCarousel({ cards, getTotal, getCount, isPaid, hideValues, re
       <div className="mx-6 rounded-2xl bg-white/80 border border-zinc-200 p-4 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm text-zinc-800">Fatura do mês</p>
+            <p className="text-sm text-zinc-800">Fatura atual{dueLabel ? ` · vence ${dueLabel}` : ''}</p>
             <p className="text-[26px] font-bold tracking-tight font-mono text-zinc-950">{hideValues ? 'R$ •••••' : brl(total)}</p>
           </div>
           <span
@@ -398,7 +408,12 @@ export function CardCarousel({ cards, getTotal, getCount, isPaid, hideValues, re
           Ver {count} compra{count !== 1 ? 's' : ''} da fatura
           <ChevronRightIcon className="w-5 h-5" />
         </button>
-        {link && <LimitInfo link={link} hideValues={hideValues} />}
+        {link && (
+          <>
+            <div className="h-px bg-zinc-200" />
+            <LimitInfo link={link} hideValues={hideValues} />
+          </>
+        )}
       </div>
 
       {settingsFor && (

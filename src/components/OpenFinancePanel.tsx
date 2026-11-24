@@ -166,7 +166,7 @@ export function OpenFinancePanel({
   if (loading) return null;
 
   return (
-    <section className="mx-6 mb-6 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+    <section className="mx-5 mb-6 p-4 rounded-2xl border border-zinc-200 bg-white/80">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <BuildingLibraryIcon className="w-5 h-5 text-zinc-700" />

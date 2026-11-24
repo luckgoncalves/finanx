@@ -539,6 +539,12 @@ export default function CartoesPage() {
                   cards={cards}
                   getTotal={getCardTotal}
                   getCount={(id) => state.transactions.filter((t) => t.creditCardId === id && inSelectedMonth(t)).length}
+                  getDue={(id) =>
+                    state.transactions
+                      .filter((t) => t.creditCardId === id && inSelectedMonth(t))
+                      .map((t) => t.date)
+                      .sort()[0] ?? null
+                  }
                   isPaid={(id) => state.transactions.filter((t) => t.creditCardId === id && inSelectedMonth(t)).every((t) => t.paid)}
                   hideValues={hideValues}
                   readOnly={isViewerMode}
