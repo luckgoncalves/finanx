@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ChevronRightIcon, TrashIcon, Cog6ToothIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, TrashIcon, Cog6ToothIcon, XMarkIcon, LinkIcon, LinkSlashIcon } from '@heroicons/react/24/outline';
 import { CreditCard } from '@/types/finance';
 
 interface Props {
@@ -14,6 +14,18 @@ interface Props {
   onOpen: (card: CreditCard) => void;
   onDelete: (cardId: string) => Promise<void>;
   onSave: (cardId: string, patch: CardPatch) => Promise<boolean>;
+  getLink?: (card: CreditCard) => CardLink | null;
+  onDisconnect?: (connectionId: string) => Promise<void>;
+}
+
+/** Dados do cartão vindos do Open Finance. */
+export interface CardLink {
+  connectionId: string;
+  bankName: string;
+  used: number;
+  limit: number | null;
+  dueDate: string | null;
+  lastSyncAt: string | null;
 }
 
 export interface CardPatch {
@@ -73,13 +85,51 @@ export function CardFace({ card, dim }: { card: CreditCard; dim?: boolean }) {
   );
 }
 
+function LimitInfo({ link, hideValues }: { link: CardLink; hideValues: boolean }) {
+  const pct = link.limit ? Math.min(100, Math.round((link.used / link.limit) * 100)) : null;
+  const free = link.limit != null ? Math.max(0, link.limit - link.used) : null;
+  const m = (n: number) => (hideValues ? 'R$ •••••' : brl(n));
+  const synced = link.lastSyncAt
+    ? new Date(link.lastSyncAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+    : null;
+  return (
+    <div className="flex flex-col gap-2 pt-1">
+      <div className="flex items-baseline justify-between text-sm">
+        <span className="text-zinc-800">Limite usado</span>
+        <span className="font-mono font-semibold text-zinc-950">
+          {m(link.used)}
+          {link.limit != null && <span className="font-normal text-zinc-800"> de {m(link.limit)}</span>}
+        </span>
+      </div>
+      {pct != null && (
+        <div className="h-1.5 rounded-full bg-zinc-950/10 overflow-hidden" role="img" aria-label={`${pct}% do limite usado`}>
+          <div className="h-full rounded-full bg-zinc-700" style={{ width: `${pct}%` }} />
+        </div>
+      )}
+      <div className="flex items-center justify-between text-[13px] text-zinc-800">
+        {free != null ? <span>Disponível {m(free)}</span> : <span />}
+        <span className="inline-flex items-center gap-1">
+          <LinkIcon className="w-3.5 h-3.5" aria-hidden="true" />
+          {link.bankName}
+          {synced ? ` · ${synced}` : ''}
+        </span>
+      </div>
+      <p className="text-[12px] text-zinc-800">O limite usado inclui parcelas futuras, por isso pode ser maior que a fatura.</p>
+    </div>
+  );
+}
+
 function CardSettings({
   card,
+  link,
+  onDisconnect,
   onClose,
   onSave,
   onDelete,
 }: {
   card: CreditCard;
+  link: CardLink | null;
+  onDisconnect?: (connectionId: string) => Promise<void>;
   onClose: () => void;
   onSave: (patch: CardPatch) => Promise<boolean>;
   onDelete: () => Promise<void>;
@@ -91,6 +141,7 @@ function CardSettings({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmUnlink, setConfirmUnlink] = useState(false);
 
   const preview: CreditCard = { ...card, name: name || card.name, lastDigits: lastDigits || null, brand: brand || null, color };
 
@@ -178,6 +229,27 @@ function CardSettings({
             {saving ? 'Salvando…' : 'Salvar'}
           </button>
 
+          {link && onDisconnect && (
+            <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-200">
+              <span className="text-sm font-medium text-zinc-800">Open Finance</span>
+              <p className="text-[13px] text-zinc-800">
+                Conectado pelo {link.bankName}. Desconectar para de atualizar todas as contas e cartões desse banco; o que já foi importado continua no app.
+              </p>
+              <button
+                onClick={async () => {
+                  if (!confirmUnlink) return setConfirmUnlink(true);
+                  await onDisconnect(link.connectionId);
+                }}
+                className={`h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold ${
+                  confirmUnlink ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-950/5 text-zinc-950'
+                }`}
+              >
+                <LinkSlashIcon className="w-5 h-5" />
+                {confirmUnlink ? `Toque de novo para desconectar o ${link.bankName}` : `Desconectar ${link.bankName}`}
+              </button>
+            </div>
+          )}
+
           <button
             onClick={async () => {
               if (!confirmDelete) return setConfirmDelete(true);
@@ -196,7 +268,7 @@ function CardSettings({
   );
 }
 
-export function CardCarousel({ cards, getTotal, getCount, isPaid, hideValues, readOnly, onOpen, onDelete, onSave }: Props) {
+export function CardCarousel({ cards, getTotal, getCount, isPaid, hideValues, readOnly, onOpen, onDelete, onSave, getLink, onDisconnect }: Props) {
   const scroller = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [settingsFor, setSettingsFor] = useState<CreditCard | null>(null);
@@ -253,6 +325,7 @@ export function CardCarousel({ cards, getTotal, getCount, isPaid, hideValues, re
   const total = getTotal(current.id);
   const count = getCount(current.id);
   const paid = count > 0 && isPaid(current.id);
+  const link = getLink?.(current) ?? null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -325,11 +398,21 @@ export function CardCarousel({ cards, getTotal, getCount, isPaid, hideValues, re
           Ver {count} compra{count !== 1 ? 's' : ''} da fatura
           <ChevronRightIcon className="w-5 h-5" />
         </button>
+        {link && <LimitInfo link={link} hideValues={hideValues} />}
       </div>
 
       {settingsFor && (
         <CardSettings
           card={settingsFor}
+          link={getLink?.(settingsFor) ?? null}
+          onDisconnect={
+            onDisconnect
+              ? async (connectionId) => {
+                  await onDisconnect(connectionId);
+                  setSettingsFor(null);
+                }
+              : undefined
+          }
           onClose={() => setSettingsFor(null)}
           onSave={async (patch) => {
             const ok = await onSave(settingsFor.id, patch);

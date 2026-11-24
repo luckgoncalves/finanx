@@ -8,6 +8,7 @@ export interface CreditCard {
   color: string;
   isActive: boolean;
   createdAt: string;
+  pluggyAccountId?: string | null;
 }
 
 export interface Transaction {

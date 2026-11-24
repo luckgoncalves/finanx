@@ -7,6 +7,7 @@ import {
   XMarkIcon,
   ChevronUpIcon,
   ArrowUpTrayIcon,
+  ArrowPathIcon,
   MagnifyingGlassIcon,
   PencilSquareIcon,
   CheckIcon,
@@ -19,8 +20,7 @@ import { Transaction } from '@/types/finance';
 import { TransactionList } from '@/components/TransactionList';
 import { ImportModal } from '@/components/ImportModal';
 import { ViewerBanner } from '@/components/ViewerBanner';
-import { OpenFinancePanel } from '@/components/OpenFinancePanel';
-import { CardCarousel, CARD_PALETTE } from '@/components/CardCarousel';
+import { CardCarousel, CARD_PALETTE, CardLink } from '@/components/CardCarousel';
 import { MonthSelector } from '@/components/MonthSelector';
 
 const PREVIEW_STORAGE_KEY = 'finanx-card-previews';
@@ -113,6 +113,70 @@ export default function CartoesPage() {
     fetchCards();
   }, [fetchCards]);
 
+  // Open Finance: dados de cada cartão (limite usado, banco, última sincronização)
+  const [links, setLinks] = useState<Record<string, CardLink>>({});
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
+  const [hasConnections, setHasConnections] = useState(false);
+
+  const loadLinks = useCallback(async () => {
+    try {
+      const [cRes, aRes] = await Promise.all([fetch('/api/bank-connections'), fetch('/api/bank-connections/accounts')]);
+      if (!cRes.ok) return;
+      const cData = await cRes.json();
+      const conns: { id: string; bankName: string | null; lastSyncAt: string | null }[] = cData.connections || [];
+      setHasConnections(conns.length > 0 && cData.configured !== false);
+      if (!aRes.ok) return;
+      const aData = await aRes.json();
+      const map: Record<string, CardLink> = {};
+      for (const b of aData.banks || []) {
+        const conn = conns.find((c) => c.id === b.connectionId);
+        for (const a of b.accounts || []) {
+          if (a.type !== 'CREDIT') continue;
+          map[a.id] = {
+            connectionId: b.connectionId,
+            bankName: conn?.bankName || 'Banco',
+            used: Math.abs(a.balance ?? 0),
+            limit: a.creditLimit ?? null,
+            dueDate: a.dueDate ?? null,
+            lastSyncAt: conn?.lastSyncAt ?? null,
+          };
+        }
+      }
+      setLinks(map);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLinks();
+  }, [loadLinks]);
+
+  const syncNow = async () => {
+    setSyncing(true);
+    setSyncMsg('');
+    try {
+      const res = await fetch('/api/bank-connections/sync', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSyncMsg(data.error || 'Não foi possível sincronizar');
+      } else {
+        const failed = (data.results || []).filter((r: { error?: string }) => r.error).map((r: { bankName?: string }) => r.bankName || 'banco');
+        setSyncMsg(failed.length ? `Falhou: ${failed.join(', ')}` : 'Atualizado');
+        setTimeout(() => setSyncMsg(''), 2500);
+      }
+      await Promise.all([fetchCards(), refreshData(), loadLinks()]);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const disconnect = async (connectionId: string) => {
+    await fetch(`/api/bank-connections/${connectionId}`, { method: 'DELETE' });
+    await Promise.all([fetchCards(), loadLinks()]);
+  };
+
   const handleCreate = async () => {
     if (!formName.trim()) {
       setFormError('Nome do cartão é obrigatório');
@@ -202,6 +266,17 @@ export default function CartoesPage() {
           </div>
           {!isViewerMode && (
             <div className="flex items-center gap-2">
+              {hasConnections && (
+                <button
+                  onClick={syncNow}
+                  disabled={syncing}
+                  aria-label="Sincronizar com os bancos"
+                  className="flex items-center gap-1.5 h-10 px-3 rounded-xl text-sm font-medium bg-white/70 border border-zinc-200 text-zinc-950 disabled:opacity-60"
+                >
+                  <ArrowPathIcon className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Sincronizando…' : syncMsg || 'Sincronizar'}
+                </button>
+              )}
               <button
                 onClick={() => setShowImport(true)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
@@ -469,6 +544,8 @@ export default function CartoesPage() {
                   readOnly={isViewerMode}
                   onOpen={handleSelectCard}
                   onDelete={handleDelete}
+                  getLink={(card) => (card.pluggyAccountId ? links[card.pluggyAccountId] ?? null : null)}
+                  onDisconnect={disconnect}
                   onSave={async (id, patch) => {
                     try {
                       const res = await fetch(`/api/credit-cards/${id}`, {
@@ -553,9 +630,6 @@ export default function CartoesPage() {
         </div>
       )}
 
-      {!isViewerMode && !selectedCard && (
-        <OpenFinancePanel onSynced={async () => { await fetchCards(); await refreshData(); }} />
-      )}
 
       {/* FAB */}
       {!isViewerMode && !selectedCard && !showForm && (

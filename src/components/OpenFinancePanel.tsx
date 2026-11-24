@@ -169,14 +169,14 @@ export function OpenFinancePanel({
     <section className="mx-6 mb-6 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
-          <BuildingLibraryIcon className="w-5 h-5 text-indigo-500" />
+          <BuildingLibraryIcon className="w-5 h-5 text-zinc-700" />
           <h2 className="font-semibold">Open Finance</h2>
         </div>
         {connections.length > 0 && (
           <button
             onClick={sync}
             disabled={syncing || !configured}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-zinc-700 text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors"
           >
             <ArrowPathIcon
               className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`}

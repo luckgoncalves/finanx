@@ -10,6 +10,7 @@ function formatCard(c: {
   color: string;
   isActive: boolean;
   createdAt: Date;
+  pluggyAccountId?: string | null;
 }) {
   return {
     id: c.id,
@@ -19,6 +20,7 @@ function formatCard(c: {
     color: c.color,
     isActive: c.isActive,
     createdAt: c.createdAt.toISOString(),
+    pluggyAccountId: c.pluggyAccountId ?? null,
   };
 }
 
