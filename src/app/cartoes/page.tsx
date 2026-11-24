@@ -5,8 +5,6 @@ import {
   CreditCardIcon,
   PlusIcon,
   XMarkIcon,
-  TrashIcon,
-  ChevronDownIcon,
   ChevronUpIcon,
   ArrowUpTrayIcon,
   MagnifyingGlassIcon,
@@ -22,6 +20,7 @@ import { TransactionList } from '@/components/TransactionList';
 import { ImportModal } from '@/components/ImportModal';
 import { ViewerBanner } from '@/components/ViewerBanner';
 import { OpenFinancePanel } from '@/components/OpenFinancePanel';
+import { CardCarousel, CARD_PALETTE } from '@/components/CardCarousel';
 import { MonthSelector } from '@/components/MonthSelector';
 
 const PREVIEW_STORAGE_KEY = 'finanx-card-previews';
@@ -40,10 +39,7 @@ function savePreviews(previews: Record<string, number>) {
   localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previews));
 }
 
-const CARD_COLORS = [
-  '#6366f1', '#f97316', '#10b981', '#ef4444',
-  '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6',
-];
+const CARD_COLORS = CARD_PALETTE;
 
 export default function CartoesPage() {
   const { state, isViewerMode, refreshData } = useFinance();
@@ -53,7 +49,7 @@ export default function CartoesPage() {
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [selectedCard, setSelectedCard] = useState<CreditCard | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [, setConfirmDeleteId] = useState<string | null>(null);
   const [cardSearch, setCardSearch] = useState('');
 
   // Preview (estimated) values per card/month
@@ -202,10 +198,7 @@ export default function CartoesPage() {
       <header className="px-6 pt-8 pb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Gerenciar</p>
-            <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-              Cartões
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-950">Cartões</h1>
           </div>
           {!isViewerMode && (
             <div className="flex items-center gap-2">
@@ -223,10 +216,6 @@ export default function CartoesPage() {
           <MonthSelector />
         </div>
       </header>
-
-      {!isViewerMode && !selectedCard && (
-        <OpenFinancePanel onSynced={async () => { await fetchCards(); await refreshData(); }} />
-      )}
 
       {/* Card list or detail */}
       {selectedCard ? (
@@ -275,7 +264,7 @@ export default function CartoesPage() {
               placeholder="Buscar transação..."
               value={cardSearch}
               onChange={(e) => setCardSearch(e.target.value)}
-              className="w-full pl-9 pr-8 py-2.5 rounded-xl text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"
+              className="w-full pl-9 pr-8 py-2.5 rounded-xl text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none focus:border-zinc-600 dark:focus:border-zinc-700 transition-colors"
             />
             {cardSearch && (
               <button
@@ -313,7 +302,7 @@ export default function CartoesPage() {
                   {!isViewerMode && (
                     <button
                       onClick={() => setShowImport(true)}
-                      className="mt-2 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition-colors"
+                      className="mt-2 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-700 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
                     >
                       <ArrowUpTrayIcon className="w-4 h-4" />
                       Importar fatura
@@ -445,10 +434,10 @@ export default function CartoesPage() {
         </div>
       ) : (
         /* ── Cards List ── */
-        <div className="px-6 pb-24 space-y-3">
+        <div className="px-6 pb-6 space-y-3">
           {loadingCards ? (
             <div className="flex justify-center py-12">
-              <div className="w-8 h-8 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
+              <div className="w-8 h-8 rounded-full border-4 border-zinc-700 border-t-transparent animate-spin" />
             </div>
           ) : cards.length === 0 && !showForm ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
@@ -461,7 +450,7 @@ export default function CartoesPage() {
               {!isViewerMode && (
                 <button
                   onClick={() => setShowForm(true)}
-                  className="mt-2 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition-colors"
+                  className="mt-2 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-700 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
                 >
                   <PlusIcon className="w-4 h-4" />
                   Adicionar cartão
@@ -470,76 +459,32 @@ export default function CartoesPage() {
             </div>
           ) : (
             <>
-              {cards.map((card) => {
-                const txCount = state.transactions.filter((t) => t.creditCardId === card.id && inSelectedMonth(t)).length;
-                const total = getCardTotal(card.id);
-
-                return (
-                  <div key={card.id} className="flex items-center rounded-2xl bg-white dark:bg-zinc-900 card-shadow dark:card-shadow-dark transition-all hover:scale-[1.01] active:scale-[0.99]">
-                    <button
-                      type="button"
-                      onClick={() => handleSelectCard(card)}
-                      className="flex-1 flex items-center gap-3 p-4 text-left min-w-0"
-                    >
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: card.color + '20' }}
-                      >
-                        <CreditCardSolid className="w-6 h-6" style={{ color: card.color }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold">{card.name}</p>
-                        <p className="text-sm text-zinc-400 dark:text-zinc-500 truncate">
-                          {[card.brand, card.lastDigits ? `•••• ${card.lastDigits}` : null]
-                            .filter(Boolean)
-                            .join(' · ') || 'Cartão de crédito'}
-                        </p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
-                          {txCount} transaç{txCount !== 1 ? 'ões' : 'ão'}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0 ml-2">
-                        <p className="text-xs text-zinc-400">Fatura do mês</p>
-                        <p className="font-bold font-mono text-rose-600 dark:text-rose-400 text-sm">
-                          {hideValues ? 'R$ •••••' : formatCurrency(total)}
-                        </p>
-                      </div>
-                      <ChevronDownIcon className="w-4 h-4 text-zinc-400 -rotate-90 shrink-0 ml-1" />
-                    </button>
-
-                    {!isViewerMode && (
-                      <div className="pr-3 flex items-center shrink-0">
-                        {confirmDeleteId === card.id ? (
-                          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
-                            <button
-                              onClick={() => handleDelete(card.id)}
-                              className="px-2 py-1 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                            >
-                              Excluir
-                            </button>
-                            <button
-                              onClick={() => setConfirmDeleteId(null)}
-                              className="p-1 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                            >
-                              <XMarkIcon className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setConfirmDeleteId(card.id);
-                            }}
-                            className="p-2 rounded-xl text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              <div className="-mx-6">
+                <CardCarousel
+                  cards={cards}
+                  getTotal={getCardTotal}
+                  getCount={(id) => state.transactions.filter((t) => t.creditCardId === id && inSelectedMonth(t)).length}
+                  isPaid={(id) => state.transactions.filter((t) => t.creditCardId === id && inSelectedMonth(t)).every((t) => t.paid)}
+                  hideValues={hideValues}
+                  readOnly={isViewerMode}
+                  onOpen={handleSelectCard}
+                  onDelete={handleDelete}
+                  onSave={async (id, patch) => {
+                    try {
+                      const res = await fetch(`/api/credit-cards/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(patch),
+                      });
+                      if (!res.ok) return false;
+                      setCards((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+                      return true;
+                    } catch {
+                      return false;
+                    }
+                  }}
+                />
+              </div>
             </>
           )}
 
@@ -599,7 +544,7 @@ export default function CartoesPage() {
               <button
                 onClick={handleCreate}
                 disabled={!formName.trim() || saving}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+                className="w-full py-2.5 rounded-xl text-sm font-semibold bg-zinc-700 text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors"
               >
                 {saving ? 'Salvando...' : 'Salvar cartão'}
               </button>
@@ -608,11 +553,15 @@ export default function CartoesPage() {
         </div>
       )}
 
+      {!isViewerMode && !selectedCard && (
+        <OpenFinancePanel onSynced={async () => { await fetchCards(); await refreshData(); }} />
+      )}
+
       {/* FAB */}
       {!isViewerMode && !selectedCard && !showForm && (
         <button
           onClick={() => setShowForm(true)}
-          className="fixed right-6 bottom-24 md:bottom-6 w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-40"
+          className="fixed right-5 bottom-[132px] md:bottom-6 w-14 h-14 rounded-full bg-zinc-700 text-white shadow-lg shadow-zinc-700/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-40"
           aria-label="Adicionar cartão"
         >
           <PlusIcon className="w-7 h-7" />

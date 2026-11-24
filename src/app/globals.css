@@ -1,20 +1,36 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --font-sans: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  
-  --color-emerald-50: #ecfdf5;
-  --color-emerald-100: #d1fae5;
-  --color-emerald-200: #a7f3d0;
-  --color-emerald-300: #6ee7b7;
-  --color-emerald-400: #34d399;
-  --color-emerald-500: #10b981;
-  --color-emerald-600: #059669;
-  --color-emerald-700: #047857;
-  --color-emerald-800: #065f46;
-  --color-emerald-900: #064e3b;
-  
+  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), 'JetBrains Mono', monospace;
+
+  /* Paleta Finanx (verdes) — remapeia zinc/emerald usados no app */
+  --color-zinc-50: #EAF7EC;
+  --color-zinc-100: #DAF1DE;
+  --color-zinc-200: #C3E0CA;
+  --color-zinc-300: #A9CBB3;
+  --color-zinc-400: #557A6B;
+  --color-zinc-500: #3F6658;
+  --color-zinc-600: #2D5246;
+  --color-zinc-700: #235347;
+  --color-zinc-800: #163832;
+  --color-zinc-900: #0B2B26;
+  --color-zinc-950: #051F20;
+
+  --color-emerald-50: #EAF7EC;
+  --color-emerald-100: #DAF1DE;
+  --color-emerald-200: #C3E0CA;
+  --color-emerald-300: #A9CBB3;
+  --color-emerald-400: #6FA184;
+  --color-emerald-500: #2F6B58;
+  --color-emerald-600: #235347;
+  --color-emerald-700: #163832;
+  --color-emerald-800: #0B2B26;
+  --color-emerald-900: #051F20;
+  --color-emerald-950: #051F20;
+
   --color-rose-400: #fb7185;
   --color-rose-500: #f43f5e;
   --color-rose-600: #e11d48;
@@ -68,7 +84,9 @@
   }
   
   body {
-    @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50;
+    @apply text-zinc-950;
+    background: linear-gradient(180deg, #EAF7EC 0%, #DAF1DE 50%, #C3E0CA 100%) fixed;
+    background-color: #DAF1DE;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -82,9 +100,9 @@
   
   .card-shadow {
     box-shadow: 
-      0 0 0 1px rgba(0, 0, 0, 0.03),
-      0 1px 3px rgba(0, 0, 0, 0.05),
-      0 6px 16px rgba(0, 0, 0, 0.04);
+      0 0 0 1px rgba(35, 83, 71, 0.08),
+      0 1px 3px rgba(11, 43, 38, 0.06),
+      0 6px 16px rgba(11, 43, 38, 0.06);
   }
   
   .card-shadow-dark {
@@ -170,3 +188,11 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* Menu inferior: bolha da aba ativa */
+@keyframes fxPop {
+  0% { transform: scale(.4) rotate(-20deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); }
+}
+.fx-pop { animation: fxPop 520ms 80ms cubic-bezier(.34,1.56,.64,1) both; }

@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Navigation } from "@/components/Navigation";
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#10b981",
+  themeColor: "#DAF1DE",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -48,17 +48,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR">
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body
-        className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans antialiased min-h-screen`}
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased min-h-screen`}
       >
         <Providers>
-          <div className="flex flex-col min-h-screen pb-28 md:pb-0 md:pl-20">
+          <div className="flex flex-col min-h-screen pb-36 md:pb-0 md:pl-20">
             <main className="flex-1">
               {children}
             </main>

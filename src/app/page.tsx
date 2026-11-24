@@ -93,14 +93,14 @@ export default function Home() {
       <section className="px-6 mb-6">
         <div className="flex gap-3">
           <Link
-            href="/entradas"
+            href="/lancar?tipo=entrada"
             className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium hover:bg-emerald-500/20 transition-colors"
           >
             <PlusIcon className="w-5 h-5" />
             Nova Entrada
           </Link>
           <Link
-            href="/despesas"
+            href="/lancar"
             className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium hover:bg-rose-500/20 transition-colors"
           >
             <PlusIcon className="w-5 h-5" />
@@ -144,7 +144,7 @@ export default function Home() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Movimentações Recentes</h2>
           <Link
-            href="/relatorios"
+            href="/extrato?aba=historico"
             className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
           >
             Ver todas

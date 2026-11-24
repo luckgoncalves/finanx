@@ -1,30 +1,29 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   HomeIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
+  ListBulletIcon,
+  PlusCircleIcon,
   ChartBarIcon,
   ArrowDownTrayIcon,
   CreditCardIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
-  ArrowTrendingUpIcon as ArrowTrendingUpIconSolid,
-  ArrowTrendingDownIcon as ArrowTrendingDownIconSolid,
+  ListBulletIcon as ListBulletIconSolid,
+  PlusCircleIcon as PlusCircleIconSolid,
   ChartBarIcon as ChartBarIconSolid,
   CreditCardIcon as CreditCardIconSolid,
 } from '@heroicons/react/24/solid';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { FinanXLogo } from './FinanXLogo';
 
-const navItems = [
+export const navItems = [
   { href: '/', label: 'Início', icon: HomeIcon, iconActive: HomeIconSolid },
-  { href: '/entradas', label: 'Entradas', icon: ArrowTrendingUpIcon, iconActive: ArrowTrendingUpIconSolid },
-  { href: '/despesas', label: 'Despesas', icon: ArrowTrendingDownIcon, iconActive: ArrowTrendingDownIconSolid },
+  { href: '/extrato', label: 'Extrato', icon: ListBulletIcon, iconActive: ListBulletIconSolid },
+  { href: '/lancar', label: 'Lançar', icon: PlusCircleIcon, iconActive: PlusCircleIconSolid },
   { href: '/cartoes', label: 'Cartões', icon: CreditCardIcon, iconActive: CreditCardIconSolid },
   { href: '/relatorios', label: 'Relatórios', icon: ChartBarIcon, iconActive: ChartBarIconSolid },
 ];
@@ -32,122 +31,13 @@ const navItems = [
 export function Navigation() {
   const pathname = usePathname();
   const { isInstallable, isInstalled, install } = usePWAInstall();
-  const [collapsed, setCollapsed] = useState(false);
-  const lastScrollY = useRef(0);
-  const ticking = useRef(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (ticking.current) return;
-      ticking.current = true;
-      requestAnimationFrame(() => {
-        const currentY = window.scrollY;
-        if (currentY > lastScrollY.current + 8 && currentY > 60) {
-          setCollapsed(true);
-        } else if (currentY < lastScrollY.current - 8 || currentY < 60) {
-          setCollapsed(false);
-        }
-        lastScrollY.current = currentY;
-        ticking.current = false;
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setCollapsed(false);
-      lastScrollY.current = 0;
-    }, 0);
-    return () => clearTimeout(t);
-  }, [pathname]);
 
   if (pathname === '/login') return null;
 
   return (
     <>
-      {/* ── Mobile: liquid glass floating pill ── */}
-      <nav className="md:hidden fixed bottom-5 left-0 right-0 flex justify-center px-4 z-50 pointer-events-none">
-        <div
-          className={`
-            flex items-center pointer-events-auto rounded-full
-            border border-white/[0.08]
-            shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]
-            transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-            ${collapsed
-              ? 'gap-0 px-1.5 py-1.5 bg-black/60'
-              : 'gap-1 px-2 py-2 bg-zinc-900/65'
-            }
-          `}
-          style={{
-            WebkitBackdropFilter: collapsed ? 'blur(40px) saturate(180%)' : 'blur(24px) saturate(160%)',
-            backdropFilter: collapsed ? 'blur(40px) saturate(180%)' : 'blur(24px) saturate(160%)',
-          }}
-        >
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            const Icon = isActive ? item.iconActive : item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`
-                  flex flex-col items-center justify-center rounded-full active:scale-90
-                  transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-                  ${collapsed ? 'px-2.5 py-1.5' : 'px-3 py-1.5'}
-                `}
-              >
-                <div className={`
-                  flex items-center justify-center rounded-full
-                  transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-                  ${collapsed ? 'p-1.5' : 'p-2'}
-                  ${isActive
-                    ? 'bg-emerald-500/20 shadow-[0_0_12px_rgba(52,211,153,0.15)]'
-                    : 'hover:bg-white/5'
-                  }
-                `}>
-                  <Icon className={`
-                    transition-all duration-500
-                    ${collapsed ? 'w-4 h-4' : 'w-5 h-5'}
-                    ${isActive ? 'text-emerald-400' : 'text-zinc-400'}
-                  `} />
-                </div>
-                <span className={`
-                  text-[9px] font-medium overflow-hidden whitespace-nowrap
-                  transition-all duration-300
-                  ${isActive ? 'text-emerald-400' : 'text-zinc-500'}
-                  ${collapsed ? 'max-h-0 opacity-0 mt-0' : 'max-h-4 opacity-100 mt-0.5'}
-                `}>
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-
-          {isInstallable && !isInstalled && (
-            <button
-              onClick={install}
-              className={`
-                flex flex-col items-center justify-center rounded-full active:scale-90
-                transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-                ${collapsed ? 'px-2.5 py-1.5' : 'px-3 py-1.5'}
-              `}
-            >
-              <div className={`
-                flex items-center justify-center rounded-full bg-purple-500/20
-                transition-all duration-500 ${collapsed ? 'p-1.5' : 'p-2'}
-              `}>
-                <ArrowDownTrayIcon className={`text-purple-400 transition-all duration-500 ${collapsed ? 'w-4 h-4' : 'w-5 h-5'}`} />
-              </div>
-              <span className={`text-[9px] font-medium text-purple-400 overflow-hidden whitespace-nowrap transition-all duration-300 ${collapsed ? 'max-h-0 opacity-0 mt-0' : 'max-h-4 opacity-100 mt-0.5'}`}>
-                Instalar
-              </span>
-            </button>
-          )}
-        </div>
-      </nav>
+      {/* ── Mobile: barra com bolha na aba ativa ── */}
+      <MobileTabBar activeIndex={navItems.findIndex((i) => i.href === (['/despesas', '/entradas'].includes(pathname) ? '/extrato' : pathname))} />
 
       {/* ── Desktop: left sidebar (unchanged) ── */}
       <nav className="hidden md:block fixed top-0 left-0 bottom-0 w-20 z-50">
@@ -222,5 +112,85 @@ export function Navigation() {
         </div>
       </nav>
     </>
+  );
+}
+
+const SPRING = 'cubic-bezier(.34,1.3,.64,1)';
+const NOTCH_PATH =
+  'M0 0 H1440 C1454 0 1456 8 1460 18 C1467 36 1482 46 1500 46 C1518 46 1533 36 1540 18 C1544 8 1546 0 1560 0 H3000 V84 H0 Z';
+
+function MobileTabBar({ activeIndex }: { activeIndex: number }) {
+  const hasActive = activeIndex >= 0;
+  const slot = (i: number) => `calc(${(i + 0.5) * (100 / navItems.length)}%`;
+  const active = hasActive ? navItems[activeIndex] : null;
+  const ActiveIcon = active?.iconActive;
+
+  return (
+    <nav className="md:hidden fixed left-3 right-3 bottom-[max(14px,env(safe-area-inset-bottom))] h-[84px] z-50 drop-shadow-[0_8px_20px_rgba(11,43,38,0.16)]">
+      {/* fundo branco com recorte que acompanha a aba ativa */}
+      <div className="absolute inset-0 rounded-[26px] overflow-hidden">
+        {hasActive ? (
+          <svg
+            aria-hidden="true"
+            width="3000"
+            height="84"
+            viewBox="0 0 3000 84"
+            className="absolute top-0 max-w-none"
+            style={{ left: `${slot(activeIndex)} - 1500px)`, transition: `left 560ms ${SPRING}` }}
+          >
+            <path d={NOTCH_PATH} fill="#FFFFFF" />
+          </svg>
+        ) : (
+          <div className="absolute inset-0 bg-white" />
+        )}
+      </div>
+
+      {/* bolha */}
+      {hasActive && ActiveIcon && (
+        <span
+          aria-hidden="true"
+          className="absolute -top-7 w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-[0_6px_16px_rgba(11,43,38,0.18)]"
+          style={{ left: `${slot(activeIndex)} - 32px)`, transition: `left 560ms ${SPRING}` }}
+        >
+          <span key={activeIndex} className="fx-pop w-12 h-12 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center">
+            <ActiveIcon className="w-[26px] h-[26px]" />
+          </span>
+        </span>
+      )}
+
+      <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}>
+        {navItems.map((item, i) => {
+          const isActive = i === activeIndex;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={isActive ? 'page' : undefined}
+              className={`relative h-[84px] ${isActive ? 'text-zinc-950' : 'text-zinc-400'}`}
+            >
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-0 top-4 flex justify-center"
+                style={{
+                  opacity: isActive ? 0 : 1,
+                  transform: isActive ? 'translateY(-18px) scale(0.6)' : 'none',
+                  transition: 'opacity 220ms ease, transform 420ms cubic-bezier(.34,1.56,.64,1)',
+                }}
+              >
+                <Icon className="w-6 h-6" />
+              </span>
+              <span
+                className={`absolute inset-x-0 top-[50px] text-center whitespace-nowrap transition-all duration-200 ${
+                  isActive ? 'text-[12px] font-bold' : 'text-[11px] font-medium'
+                }`}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
