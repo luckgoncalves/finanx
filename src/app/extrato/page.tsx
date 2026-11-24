@@ -152,7 +152,9 @@ function ExtratoContent() {
       return {
         key,
         name: `Fatura ${cardName(cardId)}`,
-        meta: `${allPaid ? 'paga' : 'cartão'} · ${txns.length} compra${txns.length !== 1 ? 's' : ''}`,
+        meta: `${allPaid ? 'paga' : `vence ${dayMonth(txns[0].date)}`} · ${txns.length} compra${txns.length !== 1 ? 's' : ''}${
+          txns.some((t) => t.importSource === 'pluggy') ? ' · atualizada pelo banco' : ''
+        }`,
         amount: total,
         paid: allPaid,
         href: '/cartoes',

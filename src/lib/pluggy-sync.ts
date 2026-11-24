@@ -23,6 +23,7 @@ export interface SyncResult {
   billsProcessed: number;
   purchasesImported: number;
   billsMarkedPaid: number;
+  openBillsUpdated: number;
   manualBillsReplaced: string[];
   manualMovedToCard: string[];
   expensesMarkedPaid: { id: string; description: string; paidAt: string }[];
@@ -72,6 +73,7 @@ export async function syncConnection(connectionId: string, today = new Date().to
     billsProcessed: 0,
     purchasesImported: 0,
     billsMarkedPaid: 0,
+    openBillsUpdated: 0,
     manualBillsReplaced: [],
     manualMovedToCard: [],
     expensesMarkedPaid: [],
@@ -132,6 +134,13 @@ export async function syncConnection(connectionId: string, today = new Date().to
           }),
         });
         result.purchasesImported += created.count;
+        // compras que já vieram com a fatura em aberto: alinha ao vencimento da fatura fechada
+        if (items.length) {
+          await prisma.transaction.updateMany({
+            where: { userId: conn.userId, externalId: { in: items.map((t) => `pluggy-tx:${t.id}`) } },
+            data: { date, month, year },
+          });
+        }
 
         // Ajuste: diferença entre o total da fatura e a soma das compras listadas pela Pluggy
         // Compras lançadas à mão que já fazem parte deste cartão/mês contam na soma.
@@ -230,6 +239,71 @@ export async function syncConnection(connectionId: string, today = new Date().to
           result.manualBillsReplaced.push(...toRemove.map((c) => c.description));
         }
         result.billsProcessed++;
+      }
+
+      // 1b) Fatura em aberto (ainda não fechada): a Pluggy não lista como bill, então montamos
+      //     pelas compras previstas para os próximos vencimentos. O valor atualiza a cada sincronização.
+      const lastClosedDue = bills.map((b) => monthOf(day(b.dueDate))).sort().pop() ?? null;
+      const dueDay = (() => {
+        const ref = account.creditData?.balanceDueDate || bills.map((b) => day(b.dueDate)).sort().pop();
+        return ref ? Math.min(28, Number(ref.slice(8, 10))) : 10;
+      })();
+      const openByDue = new Map<string, typeof purchases>();
+      for (const t of purchases) {
+        const dueMonth = shiftMonth(forecastMonth(t), -offset);
+        if (lastClosedDue && dueMonth <= lastClosedDue) continue;
+        if (!openByDue.has(dueMonth)) openByDue.set(dueMonth, []);
+        openByDue.get(dueMonth)!.push(t);
+      }
+      for (const [dueMonth, items] of openByDue) {
+        const balanceDue = account.creditData?.balanceDueDate ? day(account.creditData.balanceDueDate) : null;
+        const dueYmd = balanceDue && monthOf(balanceDue) === dueMonth ? balanceDue : `${dueMonth}-${String(dueDay).padStart(2, '0')}`;
+        const date = atNoon(dueYmd);
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        const rows = items.map((t) => {
+          const meta = t.creditCardMetadata;
+          const total = meta?.totalInstallments ?? null;
+          return {
+            userId: conn.userId,
+            description: t.description.replace(/\s+/g, ' ').trim(),
+            amount: Math.round(t.amount * 100) / 100,
+            type: 'expense',
+            category: suggestCategory(t.description),
+            date,
+            month,
+            year,
+            paid: false,
+            paidAt: null,
+            isInstallment: Boolean(total && total > 1),
+            installmentNumber: total && total > 1 ? meta?.installmentNumber ?? null : null,
+            totalInstallments: total && total > 1 ? total : null,
+            importSource: 'pluggy',
+            creditCardId: card.id,
+            purchaseDate: atNoon(day(meta?.purchaseDate || t.date)),
+            externalId: `pluggy-tx:${t.id}`,
+          };
+        });
+        const created = await prisma.transaction.createMany({ skipDuplicates: true, data: rows });
+        result.purchasesImported += created.count;
+        // valor da compra pode mudar enquanto a fatura está aberta (ex.: estorno parcial)
+        for (const t of items) {
+          await prisma.transaction.updateMany({
+            where: { userId: conn.userId, externalId: `pluggy-tx:${t.id}`, paid: false },
+            data: { amount: Math.round(t.amount * 100) / 100, date, month, year },
+          });
+        }
+        // fatura lançada à mão para este cartão/mês deixa de ser necessária
+        const manual = await prisma.transaction.findMany({
+          where: { userId: conn.userId, type: 'expense', category: 'cartao', creditCardId: null, externalId: null, month, year },
+          select: { id: true, description: true },
+        });
+        const toRemove = manual.filter((c) => manualPattern.test(c.description));
+        if (toRemove.length) {
+          await prisma.transaction.deleteMany({ where: { id: { in: toRemove.map((c) => c.id) } } });
+          result.manualBillsReplaced.push(...toRemove.map((c) => c.description));
+        }
+        result.openBillsUpdated++;
       }
     }
 
