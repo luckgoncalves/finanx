@@ -162,7 +162,33 @@ function ExtratoContent() {
       };
     });
 
-    const all = [...regular.map(toItem), ...invoices];
+    // Cartões cuja próxima fatura vence no mês seguinte (ex.: C6/Itaú vencendo no início do mês):
+    // aparecem aqui também, para a fatura aberta não ficar escondida no mês que vem.
+    const nm = currentMonth === 12 ? 1 : currentMonth + 1;
+    const ny = currentMonth === 12 ? currentYear + 1 : currentYear;
+    const nextByCard: Record<string, Transaction[]> = {};
+    state.transactions
+      .filter((t) => t.type === 'expense' && t.creditCardId && t.month === nm && t.year === ny && !byCard[t.creditCardId])
+      .forEach((t) => (nextByCard[t.creditCardId!] ||= []).push(t));
+    const nextInvoices: PayItem[] = Object.entries(nextByCard)
+      .filter(([, txns]) => !txns.every((t) => t.paid))
+      .map(([cardId, txns]) => {
+        const key = `inv_${cardId}_${ny}_${nm}`;
+        const due = txns.map((t) => t.date.slice(0, 10)).sort()[0];
+        return {
+          key,
+          name: `Fatura ${cardName(cardId)}`,
+          meta: `vence ${dayMonth(due)} · ${txns.length} compra${txns.length !== 1 ? 's' : ''}${
+            txns.some((t) => t.importSource === 'pluggy') ? ' · em aberto no banco' : ''
+          }`,
+          amount: txns.reduce((s2, t) => s2 + t.amount, 0),
+          paid: false,
+          href: '/cartoes',
+          onToggle: run(key, toggleInvoice(cardId, nm, ny, true)),
+        };
+      });
+
+    const all = [...regular.map(toItem), ...invoices, ...nextInvoices];
 
     // pendências de meses anteriores
     const isPast = (t: Transaction) => t.year < currentYear || (t.year === currentYear && t.month < currentMonth);

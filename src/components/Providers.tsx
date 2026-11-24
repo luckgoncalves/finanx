@@ -7,6 +7,7 @@ import { FinanceProvider } from '@/context/FinanceContext';
 import { OnboardingProvider } from '@/context/OnboardingContext';
 import { UIProvider } from '@/context/UIContext';
 import { RegisterServiceWorker } from './RegisterServiceWorker';
+import { SplashScreen } from './SplashScreen';
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: ReactNode }) {
           <FinanceProvider>
             <OnboardingProvider>
               <RegisterServiceWorker />
+              <SplashScreen />
               {children}
             </OnboardingProvider>
           </FinanceProvider>

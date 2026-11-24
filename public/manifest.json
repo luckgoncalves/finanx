@@ -1,5 +1,5 @@
 {
-    "background_color": "#0a0a0a",
+    "background_color": "#DAF1DE",
     "description": "Aplicativo para controle de finanças pessoais",
     "display": "standalone",
     "icons": [
@@ -56,5 +56,5 @@
     "orientation": "portrait-primary",
     "short_name": "FinanX",
     "start_url": "/",
-    "theme_color": "#10b981"
+    "theme_color": "#DAF1DE"
 }

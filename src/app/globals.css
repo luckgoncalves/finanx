@@ -196,3 +196,21 @@ input[type="number"] {
   100% { transform: scale(1) rotate(0); }
 }
 .fx-pop { animation: fxPop 520ms 80ms cubic-bezier(.34,1.56,.64,1) both; }
+
+/* Splash */
+@keyframes fxMark { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.06); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes fxBar { 0% { transform: scaleY(0); } 100% { transform: scaleY(1); } }
+@keyframes fxUp { 0% { transform: translateY(10px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes fxRing { 0% { transform: scale(.85); opacity: .55; } 100% { transform: scale(1.6); opacity: 0; } }
+@keyframes fxDot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.fx-mark { animation: fxMark 700ms cubic-bezier(.34,1.56,.64,1) both; }
+.fx-ring { animation: fxRing 2.4s 600ms ease-out infinite; }
+.fx-b1, .fx-b2, .fx-b3 { transform-origin: bottom; }
+.fx-b1 { animation: fxBar 520ms 350ms cubic-bezier(.34,1.56,.64,1) both; }
+.fx-b2 { animation: fxBar 520ms 450ms cubic-bezier(.34,1.56,.64,1) both; }
+.fx-b3 { animation: fxBar 520ms 550ms cubic-bezier(.34,1.56,.64,1) both; }
+.fx-word { animation: fxUp 500ms 650ms ease-out both; }
+.fx-tag { animation: fxUp 500ms 800ms ease-out both; }
+.fx-d1 { animation: fxDot 1.2s 1s infinite; }
+.fx-d2 { animation: fxDot 1.2s 1.15s infinite; }
+.fx-d3 { animation: fxDot 1.2s 1.3s infinite; }
